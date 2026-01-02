@@ -5,17 +5,15 @@ node_modules/
 
 # Build outputs
 dist/
+dist-ssr/
 build/
 out/
-.next/
-.nuxt/
 
 # Tauri
 src-tauri/target/
 src-tauri/WixTools/
-src-tauri/Cargo.lock
 
-# Python
+# Python (server)
 server/__pycache__/
 server/.venv/
 server/venv/
@@ -29,29 +27,37 @@ server/.mypy_cache/
 .env.*.local
 *.env
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-
 # Logs
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE/Editor
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.sw?
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
 
 # Testing
 coverage/
 .nyc_output/
 
-# Documentation (private)
-docs/
-
 # Misc
-*.local
 .cache/
 tmp/
 temp/
+
+# document (private)
+docs/
