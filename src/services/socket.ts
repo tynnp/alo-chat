@@ -282,6 +282,15 @@ async function handleMessage(data: { event: string; payload: unknown }) {
             chatStore.updateAllMessagesStatus(conversationId, userId, 'read');
             break;
         }
+        case 'conversation:deleted': {
+            const { conversationId } = data.payload as {
+                conversationId: string;
+                deletedBy: string;
+            };
+
+            chatStore.removeConversation(conversationId);
+            break;
+        }
         case 'user:status': {
             const { userId, status, lastOnline } = data.payload as { userId: string; status: 'online' | 'offline'; lastOnline?: string };
 

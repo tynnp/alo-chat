@@ -199,6 +199,8 @@ async def clear_conversation_messages(conversation_id: str, current_user: dict =
 
 @router.delete("/{conversation_id}")
 async def delete_conversation(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    from app.websocket import manager
+    
     db = get_database()
     user_id = current_user["_id"]
     
@@ -213,7 +215,17 @@ async def delete_conversation(conversation_id: str, current_user: dict = Depends
     if conversation.get("type") == "self":
         raise HTTPException(status_code=400, detail="Không thể xóa Cloud của tôi. Hãy dùng chức năng xóa tin nhắn.")
     
+    member_ids = [m["user_id"] for m in conversation.get("members", [])]
     await db.messages.delete_many({"conversation_id": conversation_id})
     await db.conversations.delete_one({"_id": ObjectId(conversation_id)})
+    
+    # Broadcast tới tất cả thành viên
+    await manager.broadcast_to_users({
+        "event": "conversation:deleted",
+        "payload": {
+            "conversationId": conversation_id,
+            "deletedBy": user_id
+        }
+    }, member_ids)
     
     return {"message": "Đã xóa cuộc hội thoại"}

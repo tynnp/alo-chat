@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useFriendStore } from '../../stores/friendStore';
 import { API_BASE_URL, conversationsApi } from '../../services/api';
 import ContextMenu from './ContextMenu';
+import ConfirmModal from './ConfirmModal';
 
 interface ChatListSidebarProps {
     onSelectConversation: (id: string) => void;
@@ -18,12 +19,27 @@ interface ContextMenuState {
     conversation: Conversation | null;
 }
 
+interface ConfirmModalState {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: 'clearMessages' | 'deleteConversation' | null;
+    conversationId: string | null;
+}
+
 export default function ChatListSidebar({ onSelectConversation, width, setWidth }: ChatListSidebarProps) {
     const isResizing = useRef(false);
     const { conversations, activeConversationId, togglePinConversation, clearConversationMessages, removeConversation } = useChatStore();
     const { user, token } = useAuthStore();
     const { friends } = useFriendStore();
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+    const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+        isOpen: false,
+        title: '',
+        message: '',
+        action: null,
+        conversationId: null,
+    });
 
     // Xử lý thay đổi kích thước
     useEffect(() => {
@@ -227,39 +243,67 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                             icon: <Trash2 className="w-4 h-4" />,
                             danger: true,
                             divider: true,
-                            onClick: async () => {
-                                if (!token || !contextMenu.conversation) return;
+                            onClick: () => {
+                                if (!contextMenu.conversation) return;
                                 const conv = contextMenu.conversation;
-                                const confirmMsg = conv.type === 'self'
-                                    ? 'Bạn có chắc muốn xóa tất cả tin nhắn trong Cloud?'
-                                    : 'Bạn có chắc muốn xóa tất cả tin nhắn?';
-                                if (!confirm(confirmMsg)) return;
-                                try {
-                                    await conversationsApi.clearMessages(token, conv.id);
-                                    clearConversationMessages(conv.id);
-                                } catch (error) {
-                                    console.error('Failed to clear messages:', error);
-                                }
+                                setConfirmModal({
+                                    isOpen: true,
+                                    title: 'Xóa tin nhắn',
+                                    message: conv.type === 'self'
+                                        ? 'Bạn có chắc muốn xóa tất cả tin nhắn trong Cloud? Hành động này không thể hoàn tác.'
+                                        : 'Bạn có chắc muốn xóa tất cả tin nhắn trong cuộc trò chuyện này? Hành động này không thể hoàn tác.',
+                                    action: 'clearMessages',
+                                    conversationId: conv.id,
+                                });
                             }
                         },
                         ...(contextMenu.conversation.type !== 'self' ? [{
                             label: 'Xóa cuộc trò chuyện',
                             icon: <Trash2 className="w-4 h-4" />,
                             danger: true,
-                            onClick: async () => {
-                                if (!token || !contextMenu.conversation) return;
-                                if (!confirm('Bạn có chắc muốn xóa cuộc trò chuyện này?')) return;
-                                try {
-                                    await conversationsApi.delete(token, contextMenu.conversation.id);
-                                    removeConversation(contextMenu.conversation.id);
-                                } catch (error) {
-                                    console.error('Failed to delete conversation:', error);
-                                }
+                            onClick: () => {
+                                if (!contextMenu.conversation) return;
+                                setConfirmModal({
+                                    isOpen: true,
+                                    title: 'Xóa cuộc trò chuyện',
+                                    message: 'Bạn có chắc muốn xóa cuộc trò chuyện này? Tất cả tin nhắn sẽ bị xóa và không thể hoàn tác.',
+                                    action: 'deleteConversation',
+                                    conversationId: contextMenu.conversation.id,
+                                });
                             }
                         }] : [])
                     ]}
                 />
             )}
+
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText="Xóa"
+                cancelText="Hủy"
+                danger={true}
+                onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={async () => {
+                    if (!token || !confirmModal.conversationId) return;
+
+                    try {
+                        if (confirmModal.action === 'clearMessages') {
+                            await conversationsApi.clearMessages(token, confirmModal.conversationId);
+                            clearConversationMessages(confirmModal.conversationId);
+                        } else if (confirmModal.action === 'deleteConversation') {
+                            await conversationsApi.delete(token, confirmModal.conversationId);
+                            removeConversation(confirmModal.conversationId);
+                        }
+                    } catch (error) {
+                        console.error('Failed to perform action:', error);
+                    }
+
+                    setConfirmModal({ ...confirmModal, isOpen: false });
+                }}
+            />
         </div>
     );
 }
+
