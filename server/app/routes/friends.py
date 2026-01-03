@@ -1,23 +1,28 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from typing import List
 from app.database import get_database
 from app.models.friendship import FriendRequestCreate, FriendRequestResponse, FriendResponse
 from app.services import get_current_user
+from app.websocket import manager
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
 
-async def get_user_info(db, user_id: str) -> dict:
+async def get_user_info(db, user_id: str):
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if user:
-        return {
+        info = {
             "id": str(user["_id"]),
             "username": user["username"],
-            "display_name": user["display_name"],
+            "display_name": user.get("display_name", user["username"]),
             "avatar_url": user.get("avatar_url"),
             "status": user.get("status", "offline"),
         }
+        if user.get("last_online"):
+            last = user["last_online"]
+            info["last_online"] = last.replace(tzinfo=timezone.utc).isoformat() if isinstance(last, datetime) else last
+        return info
     return None
 
 async def are_friends(db, user1_id: str, user2_id: str) -> bool:
@@ -148,15 +153,29 @@ async def send_friend_request(data: FriendRequestCreate, current_user: dict = De
         "from_user_id": user_id,
         "to_user_id": to_user_id,
         "status": "pending",
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "accepted_at": None,
         "rejected_at": None
     }
     
     result = await db.friendships.insert_one(friend_request)
-    friend_request["_id"] = str(result.inserted_id)
+    request_id = str(result.inserted_id)
     
-    return {"message": "Đã gửi lời mời kết bạn", "request_id": str(result.inserted_id)}
+    # Gửi WebSocket notification đến người nhận
+    from_user_info = await get_user_info(db, user_id)
+    await manager.send_personal_message({
+        "event": "friend:request_received",
+        "payload": {
+            "id": request_id,
+            "from_user_id": user_id,
+            "from_user_name": from_user_info["display_name"] if from_user_info else "",
+            "from_user_avatar": from_user_info.get("avatar_url") if from_user_info else None,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat()
+        }
+    }, to_user_id)
+    
+    return {"message": "Đã gửi lời mời kết bạn", "request_id": request_id}
 
 @router.post("/accept/{request_id}")
 async def accept_friend_request(request_id: str, current_user: dict = Depends(get_current_user)):
@@ -179,6 +198,18 @@ async def accept_friend_request(request_id: str, current_user: dict = Depends(ge
         {"_id": ObjectId(request_id)},
         {"$set": {"status": "accepted", "accepted_at": datetime.utcnow()}}
     )
+    
+    # Gửi WebSocket notification đến người đã gửi lời mời
+    from_user_id = request["from_user_id"]
+    current_user_info = await get_user_info(db, user_id)
+    
+    await manager.send_personal_message({
+        "event": "friend:request_accepted",
+        "payload": {
+            "request_id": request_id,
+            "new_friend": current_user_info
+        }
+    }, from_user_id)
     
     return {"message": "Đã chấp nhận lời mời kết bạn"}
 

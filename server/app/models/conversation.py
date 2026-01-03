@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ConversationMember(BaseModel):
     user_id: str
     role: str = "member"  # admin hoặc member
-    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ConversationCreate(BaseModel):
     type: str = Field(..., pattern="^(private|group|self)$")

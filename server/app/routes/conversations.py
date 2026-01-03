@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from typing import List
 from app.database import get_database
@@ -18,6 +18,22 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
     
     for conv in conversations:
         conv["_id"] = str(conv["_id"])
+        
+        # Lấy tin nhắn cuối cùng
+        last_message = await db.messages.find_one(
+            {"conversation_id": str(conv["_id"])},
+            sort=[("created_at", -1)]
+        )
+        if last_message:
+            conv["last_message"] = {
+                "_id": str(last_message["_id"]),
+                "content": last_message["content"],
+                "sender_id": last_message["sender_id"],
+                "type": last_message["type"],
+                "created_at": last_message["created_at"].isoformat() if last_message.get("created_at") else None
+            }
+        else:
+            conv["last_message"] = None
     
     return {"conversations": conversations}
 
@@ -52,16 +68,16 @@ async def create_conversation(data: ConversationCreate, current_user: dict = Dep
             existing["_id"] = str(existing["_id"])
             return existing
     
-    members = [{"user_id": user_id, "role": "admin", "joined_at": datetime.utcnow()}]
+    members = [{"user_id": user_id, "role": "admin", "joined_at": datetime.now(timezone.utc)}]
     for member_id in data.member_ids:
-        members.append({"user_id": member_id, "role": "member", "joined_at": datetime.utcnow()})
+        members.append({"user_id": member_id, "role": "member", "joined_at": datetime.now(timezone.utc)})
     
     conversation = {
         "type": data.type,
         "name": data.name,
         "members": members,
         "created_by": user_id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "last_message_at": None,
     }
     
@@ -106,7 +122,7 @@ async def add_member(conversation_id: str, member_id: str, current_user: dict = 
     
     await db.conversations.update_one(
         {"_id": ObjectId(conversation_id)},
-        {"$push": {"members": {"user_id": member_id, "role": "member", "joined_at": datetime.utcnow()}}}
+        {"$push": {"members": {"user_id": member_id, "role": "member", "joined_at": datetime.now(timezone.utc)}}}
     )
     
     return {"message": "Đã thêm thành viên"}

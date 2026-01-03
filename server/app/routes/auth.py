@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from app.database import get_database
 from app.models import UserCreate, UserLogin, UserResponse
@@ -27,7 +27,7 @@ async def register(user_data: UserCreate):
         "password_hash": get_password_hash(user_data.password),
         "avatar_url": None,
         "status": "offline",
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "last_online": None,
     }
     

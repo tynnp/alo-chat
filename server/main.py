@@ -1,9 +1,10 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 import json
+import asyncio
 
 from app.config import get_settings
 from app.database import connect_to_mongo, close_mongo_connection, get_database
@@ -68,8 +69,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     # Cập nhật trạng thái online
     await db.users.update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"status": "online", "last_online": datetime.utcnow()}}
+        {"$set": {"status": "online", "last_online": datetime.now(timezone.utc)}}
     )
+    
+    # Thông báo cho bạn bè rằng user này đã online
+    await notify_friends_status(db, user_id, "online")
     
     try:
         while True:
@@ -77,24 +81,66 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
             event = data.get("event")
             payload = data.get("data", {})
             
-            if event == "message:send":
-                await handle_message_send(user_id, payload, db)
-            elif event == "message:read":
-                await handle_message_read(user_id, payload, db)
-            elif event == "user:typing":
-                await handle_typing(user_id, payload)
+            if event == "ping":
+                await websocket.send_json({"event": "pong"})
+                continue
+
+            try:
+                if event == "message:send":
+                    await handle_message_send(user_id, payload, db)
+                elif event == "message:read":
+                    await handle_message_read(user_id, payload, db)
+                elif event == "message:read_all":
+                    await handle_conversation_read(user_id, payload, db)
+                elif event == "user:typing":
+                    await handle_typing(user_id, payload)
+            except Exception:
+                pass
     
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
         manager.disconnect(websocket, user_id)
-        await db.users.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"status": "offline", "last_online": datetime.utcnow()}}
-        )
+
+        # Chỉ set offline nếu không còn kết nối nào khác
+        if not manager.is_user_online(user_id):
+            await db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"status": "offline", "last_online": datetime.now(timezone.utc)}}
+            )
+
+            # Thông báo cho bạn bè rằng user này đã offline
+            await notify_friends_status(db, user_id, "offline")
+
+async def notify_friends_status(db, user_id: str, status: str):
+    cursor = db.friendships.find({
+        "status": "accepted",
+        "$or": [
+            {"from_user_id": user_id},
+            {"to_user_id": user_id}
+        ]
+    })
+    friendships = await cursor.to_list(100)
+    
+    friend_ids = []
+    for fs in friendships:
+        friend_id = fs["to_user_id"] if fs["from_user_id"] == user_id else fs["from_user_id"]
+        friend_ids.append(friend_id)
+    
+    if friend_ids:
+        payload = {"userId": user_id, "status": status}
+        if status == "offline":
+            payload["lastOnline"] = datetime.now(timezone.utc).isoformat()
+            
+        await manager.broadcast_to_users({
+            "event": "user:status",
+            "payload": payload
+        }, friend_ids)
 
 async def handle_message_send(sender_id: str, payload: dict, db):
     conversation_id = payload.get("conversationId")
     content = payload.get("content")
     msg_type = payload.get("type", "text")
+    
+    now = datetime.utcnow()
     
     # Tạo tin nhắn
     message = {
@@ -102,28 +148,76 @@ async def handle_message_send(sender_id: str, payload: dict, db):
         "sender_id": sender_id,
         "content": content,
         "type": msg_type,
-        "status": [{"user_id": sender_id, "status": "sent", "at": datetime.utcnow()}],
-        "created_at": datetime.utcnow(),
+        "status": [{"user_id": sender_id, "status": "sent", "at": now}],
+        "created_at": now,
     }
     
     result = await db.messages.insert_one(message)
-    message["_id"] = str(result.inserted_id)
     
-    # Cập nhật thời gian tin nhắn cuối
-    await db.conversations.update_one(
-        {"_id": ObjectId(conversation_id)},
-        {"$set": {"last_message_at": datetime.utcnow()}}
+    client_id = payload.get("clientId")
+    
+    ws_message = {
+        "_id": str(result.inserted_id),
+        "clientId": client_id,
+        "conversation_id": conversation_id,
+        "sender_id": sender_id,
+        "content": content,
+        "type": msg_type,
+        "status": [{"user_id": sender_id, "status": "sent", "at": now.isoformat()}],
+        "created_at": now.isoformat(),
+    }
+
+    await manager.send_personal_message({
+        "event": "message:new",
+        "payload": ws_message
+    }, sender_id)
+    
+    async def background_tasks():
+        await db.conversations.update_one(
+            {"_id": ObjectId(conversation_id)},
+            {"$set": {"last_message_at": now}}
+        )
+        
+        conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
+        if not conversation:
+            return
+            
+        member_ids = [m["user_id"] for m in conversation["members"]]
+        other_member_ids = [uid for uid in member_ids if uid != sender_id]
+        
+        if other_member_ids:
+            await manager.broadcast_to_users({
+                "event": "message:new",
+                "payload": ws_message
+            }, other_member_ids)
+
+    asyncio.create_task(background_tasks())
+
+async def handle_conversation_read(user_id: str, payload: dict, db):
+    conversation_id = payload.get("conversationId")
+    if not conversation_id:
+        return
+        
+    await db.messages.update_many(
+        {
+            "conversation_id": conversation_id,
+            "sender_id": {"$ne": user_id},
+            "status.user_id": {"$ne": user_id}
+        },
+        {"$push": {"status": {"user_id": user_id, "status": "read", "at": datetime.utcnow()}}}
     )
     
-    # Lấy danh sách thành viên
     conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
-    member_ids = [m["user_id"] for m in conversation["members"]]
-    
-    # Gửi đến tất cả thành viên
-    await manager.broadcast_to_users({
-        "event": "message:new",
-        "payload": message
-    }, member_ids)
+    if conversation:
+        member_ids = [m["user_id"] for m in conversation["members"] if m["user_id"] != user_id]
+        if member_ids:
+            asyncio.create_task(manager.broadcast_to_users({
+                "event": "message:read_all",
+                "payload": {
+                    "conversationId": conversation_id,
+                    "userId": user_id
+                }
+            }, member_ids))
 
 async def handle_message_read(user_id: str, payload: dict, db):
     conversation_id = payload.get("conversationId")
@@ -154,10 +248,10 @@ async def handle_typing(user_id: str, payload: dict):
     conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
     if conversation:
         member_ids = [m["user_id"] for m in conversation["members"] if m["user_id"] != user_id]
-        await manager.broadcast_to_users({
+        asyncio.create_task(manager.broadcast_to_users({
             "event": "user:typing",
             "payload": {"conversationId": conversation_id, "userId": user_id}
-        }, member_ids)
+        }, member_ids))
 
 if __name__ == "__main__":
     import uvicorn

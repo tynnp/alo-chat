@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 class FileAttachment(BaseModel):
     url: str
@@ -11,7 +11,7 @@ class FileAttachment(BaseModel):
 class MessageStatus(BaseModel):
     user_id: str
     status: str = "sent"  # sent, delivered, read
-    at: datetime = Field(default_factory=datetime.utcnow)
+    at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MessageCreate(BaseModel):
     conversation_id: str

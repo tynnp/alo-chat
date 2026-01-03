@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 ngày
     
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "tauri://localhost"]
+    CORS_ORIGINS: list[str] = ["*"]
     
     class Config:
         env_file = ".env"
