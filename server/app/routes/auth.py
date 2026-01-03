@@ -4,6 +4,7 @@ from bson import ObjectId
 from app.database import get_database
 from app.models import UserCreate, UserLogin, UserResponse
 from app.services import get_password_hash, verify_password, create_access_token, get_current_user
+from app.services.user_helper import create_self_conversation
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -34,15 +35,7 @@ async def register(user_data: UserCreate):
     user_id = str(result.inserted_id)
     
     # Tạo cuộc hội thoại "Cloud của tôi"
-    self_conversation = {
-        "type": "self",
-        "name": "Cloud của tôi",
-        "members": [{"user_id": user_id, "role": "admin", "joined_at": datetime.utcnow()}],
-        "created_by": user_id,
-        "created_at": datetime.utcnow(),
-        "last_message_at": None,
-    }
-    await db.conversations.insert_one(self_conversation)
+    await create_self_conversation(db, user_id)
     
     # Tạo token
     access_token = create_access_token(data={"sub": user_id})

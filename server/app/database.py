@@ -17,6 +17,11 @@ async def connect_to_mongo():
     await db.messages.create_index([("conversation_id", 1), ("created_at", -1)])
     
     print(f"Đã kết nối MongoDB: {settings.MONGODB_DB_NAME}")
+    
+    # Chạy seed data
+    from app.seed import run_seed
+    from app.services import get_password_hash
+    await run_seed(db, get_password_hash)
 
 async def close_mongo_connection():
     global client
