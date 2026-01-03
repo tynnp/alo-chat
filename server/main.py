@@ -10,7 +10,7 @@ import os
 
 from app.config import get_settings
 from app.database import connect_to_mongo, close_mongo_connection, get_database
-from app.routes import auth_router, conversations_router, users_router, friends_router
+from app.routes import auth_router, conversations_router, users_router, friends_router, files_router
 from app.websocket import manager
 from app.services import decode_access_token
 
@@ -46,6 +46,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(conversations_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(friends_router, prefix="/api")
+app.include_router(files_router, prefix="/api")
 
 @app.get("/")
 async def root():
@@ -145,6 +146,8 @@ async def handle_message_send(sender_id: str, payload: dict, db):
     conversation_id = payload.get("conversationId")
     content = payload.get("content")
     msg_type = payload.get("type", "text")
+    file_url = payload.get("fileUrl")
+    file_name = payload.get("fileName")
     
     now = datetime.now(timezone.utc)
     
@@ -154,6 +157,8 @@ async def handle_message_send(sender_id: str, payload: dict, db):
         "sender_id": sender_id,
         "content": content,
         "type": msg_type,
+        "file_url": file_url,
+        "file_name": file_name,
         "status": [{"user_id": sender_id, "status": "sent", "at": now}],
         "created_at": now,
     }
@@ -175,6 +180,8 @@ async def handle_message_send(sender_id: str, payload: dict, db):
         "sender_avatar": sender_avatar,
         "content": content,
         "type": msg_type,
+        "file_url": file_url,
+        "file_name": file_name,
         "status": [{"user_id": sender_id, "status": "sent", "at": now.isoformat()}],
         "created_at": now.isoformat(),
     }
