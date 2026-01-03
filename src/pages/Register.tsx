@@ -93,6 +93,7 @@ export default function Register() {
                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="Ví dụ: Nguyễn Văn A"
                                 required
+                                data-allow-context="true"
                             />
                         </div>
                     </div>
@@ -112,6 +113,7 @@ export default function Register() {
                                 placeholder="Nhập tên đăng nhập"
                                 required
                                 autoComplete="username"
+                                data-allow-context="true"
                             />
                         </div>
                     </div>
@@ -131,6 +133,7 @@ export default function Register() {
                                 placeholder="Nhập mật khẩu"
                                 required
                                 autoComplete="new-password"
+                                data-allow-context="true"
                             />
                             <button
                                 type="button"
@@ -162,6 +165,7 @@ export default function Register() {
                                 placeholder="Nhập lại mật khẩu"
                                 required
                                 autoComplete="new-password"
+                                data-allow-context="true"
                             />
                             <button
                                 type="button"

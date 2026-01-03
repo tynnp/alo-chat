@@ -76,6 +76,7 @@ export default function Login() {
                                 placeholder="Nhập tên đăng nhập"
                                 required
                                 autoComplete="username"
+                                data-allow-context="true"
                             />
                         </div>
                     </div>
@@ -94,6 +95,7 @@ export default function Login() {
                                 className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="Nhập mật khẩu"
                                 required
+                                data-allow-context="true"
                                 autoComplete="current-password"
                             />
                             <button

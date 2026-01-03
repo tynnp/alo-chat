@@ -163,6 +163,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                                         e.preventDefault();
                                         setContextMenu({ x: e.clientX, y: e.clientY, conversation: conv });
                                     }}
+                                    data-allow-context="true"
                                     className={`group p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-colors
                                         ${isActive ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
                                 >

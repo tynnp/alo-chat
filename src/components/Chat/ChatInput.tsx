@@ -112,6 +112,7 @@ export default function ChatInput({ onSendMessage, onFileUpload }: ChatInputProp
                         placeholder={selectedFile ? "Nhấn gửi để tải file..." : "Nhập tin nhắn..."}
                         disabled={!!selectedFile}
                         className="flex-1 bg-transparent border-none focus:outline-none text-gray-800 text-sm py-1 max-h-32 overflow-y-auto disabled:text-gray-400"
+                        data-allow-context="true"
                     />
                     <button className="text-gray-400 hover:text-yellow-500 transition-colors">
                         <Smile className="w-5 h-5" />
