@@ -34,6 +34,14 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
             }
         else:
             conv["last_message"] = None
+
+        # Tính số tin nhắn chưa đọc
+        unread_count = await db.messages.count_documents({
+            "conversation_id": str(conv["_id"]),
+            "sender_id": {"$ne": user_id},
+            "status": {"$not": {"$elemMatch": {"user_id": user_id, "status": "read"}}}
+        })
+        conv["unread_count"] = unread_count
     
     return {"conversations": conversations}
 

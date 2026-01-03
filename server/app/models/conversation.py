@@ -19,6 +19,7 @@ class ConversationResponse(BaseModel):
     members: List[ConversationMember]
     created_by: str
     created_at: datetime
+    unread_count: int = 0
     last_message_at: Optional[datetime] = None
     
     class Config:

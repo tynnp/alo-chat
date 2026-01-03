@@ -31,7 +31,7 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
           type: conv.type,
           name: conv.name,
           members: conv.members.map(m => m.user_id),
-          unreadCount: 0,
+          unreadCount: conv.unread_count,
           createdAt: new Date(conv.created_at),
           lastMessage: conv.last_message ? {
             id: conv.last_message._id,
