@@ -162,11 +162,17 @@ async def handle_message_send(sender_id: str, payload: dict, db):
     
     client_id = payload.get("clientId")
     
+    sender = await db.users.find_one({"_id": ObjectId(sender_id)})
+    sender_name = sender.get("display_name", "Người dùng") if sender else "Người dùng"
+    sender_avatar = sender.get("avatar_url") if sender else None
+
     ws_message = {
         "_id": str(result.inserted_id),
         "clientId": client_id,
         "conversation_id": conversation_id,
         "sender_id": sender_id,
+        "sender_name": sender_name,
+        "sender_avatar": sender_avatar,
         "content": content,
         "type": msg_type,
         "status": [{"user_id": sender_id, "status": "sent", "at": now.isoformat()}],

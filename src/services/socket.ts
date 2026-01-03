@@ -2,6 +2,7 @@ import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore, type Message } from '../stores/chatStore';
 import { useFriendStore, type Friend, type FriendRequest } from '../stores/friendStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import { API_BASE_URL } from './api';
 
 const WS_URL = import.meta.env.VITE_WS_URL || API_BASE_URL.replace('http', 'ws').replace(/\/$/, '') + '/ws';
@@ -158,6 +159,8 @@ interface BackendMessage {
     clientId?: string;
     conversation_id: string;
     sender_id: string;
+    sender_name?: string;
+    sender_avatar?: string;
     content: string;
     type: 'text' | 'file' | 'image' | 'system';
     status: Array<{ user_id: string; status: string; at: string }>;
@@ -172,6 +175,8 @@ interface BackendFriendInfo {
     status: 'online' | 'offline';
 }
 
+const processedMessages = new Set<string>();
+
 function handleMessage(data: { event: string; payload: unknown }) {
     const chatStore = useChatStore.getState();
     const friendStore = useFriendStore.getState();
@@ -180,6 +185,14 @@ function handleMessage(data: { event: string; payload: unknown }) {
     switch (data.event) {
         case 'message:new': {
             const backendMsg = data.payload as BackendMessage;
+
+            if (processedMessages.has(backendMsg._id)) return;
+            processedMessages.add(backendMsg._id);
+
+            if (processedMessages.size > 100) {
+                const first = processedMessages.values().next().value;
+                if (first) processedMessages.delete(first);
+            }
 
             if (backendMsg.clientId && backendMsg.sender_id === authStore.user?.id) {
                 chatStore.resolveOptimisticMessage(backendMsg.conversation_id, backendMsg.clientId, backendMsg._id);
@@ -202,6 +215,19 @@ function handleMessage(data: { event: string; payload: unknown }) {
             const shouldIncrementUnread = !isOwnMessage && isInactiveConversation;
 
             chatStore.addMessage(message.conversationId, message, shouldIncrementUnread);
+
+            const isAppFocused = document.hasFocus();
+            const shouldShowNotification = !isOwnMessage && (isInactiveConversation || !isAppFocused);
+
+            if (shouldShowNotification) {
+                const notificationStore = useNotificationStore.getState();
+                notificationStore.addNotification({
+                    senderName: backendMsg.sender_name || 'Người dùng',
+                    senderAvatar: backendMsg.sender_avatar,
+                    content: backendMsg.content,
+                    conversationId: backendMsg.conversation_id,
+                });
+            }
             break;
         }
         case 'message:status': {

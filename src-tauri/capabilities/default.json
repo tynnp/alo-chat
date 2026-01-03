@@ -3,13 +3,26 @@
   "identifier": "default",
   "description": "Enables default permissions for Alo Chat",
   "windows": [
-    "main"
+    "*"
   ],
   "permissions": [
     "core:default",
     "notification:default",
     "fs:default",
     "dialog:default",
-    "websocket:default"
+    "websocket:default",
+    "core:window:allow-create",
+    "core:window:allow-set-position",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-current-monitor",
+    "core:window:allow-close",
+    "core:window:allow-unminimize",
+    "core:window:allow-maximize",
+    "core:webview:allow-create-webview-window",
+    "core:webview:allow-webview-close",
+    "core:event:allow-emit",
+    "core:event:allow-listen"
   ]
 }

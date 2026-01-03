@@ -8,6 +8,7 @@ import { socketService } from './services/socket';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
+import NotificationPopup from './pages/NotificationPopup';
 import './App.css';
 
 // Component để khởi tạo app khi đã đăng nhập
@@ -130,6 +131,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/notification-pop" element={<NotificationPopup />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -11,6 +11,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useFriendStore } from '../stores/friendStore';
 import { conversationsApi, type MessageResponse } from '../services/api';
 import { socketService } from '../services/socket';
+import { listen } from '@tauri-apps/api/event';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 type ChatTab = 'chat' | 'contacts';
 
@@ -59,6 +61,30 @@ export default function Chat() {
             socketService.markConversationAsRead(activeConversationId);
         }
     }, [activeConversationId, currentMessages.length, user?.id]);
+
+    useEffect(() => {
+        const unlisten = listen<{ conversationId: string }>('open-conversation', async (event) => {
+            const { conversationId } = event.payload;
+
+            // Đưa app lên trên cùng
+            try {
+                const win = getCurrentWebviewWindow();
+                await win.unminimize();
+                await win.maximize();
+                await win.show();
+                await win.setFocus();
+            } catch (err) { }
+
+            if (conversationId) {
+                setActiveTab('chat');
+                setActiveConversation(conversationId);
+            }
+        });
+
+        return () => {
+            unlisten.then(f => f());
+        };
+    }, []);
 
     // Tải tin nhắn khi chọn cuộc hội thoại
     useEffect(() => {
