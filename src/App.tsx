@@ -26,24 +26,34 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 
         // Tải danh sách hội thoại
         const convResponse = await conversationsApi.getAll(token);
-        const conversations = convResponse.conversations.map((conv: ConversationResponse) => ({
+        const conversations = convResponse.conversations.map((conv: ConversationResponse & { last_message?: { _id: string; content: string; sender_id: string; type: string; created_at: string } }) => ({
           id: conv._id,
           type: conv.type,
           name: conv.name,
           members: conv.members.map(m => m.user_id),
           unreadCount: 0,
           createdAt: new Date(conv.created_at),
+          lastMessage: conv.last_message ? {
+            id: conv.last_message._id,
+            conversationId: conv._id,
+            senderId: conv.last_message.sender_id,
+            content: conv.last_message.content,
+            type: conv.last_message.type as 'text' | 'file' | 'image' | 'system',
+            status: 'sent' as const,
+            createdAt: new Date(conv.last_message.created_at),
+          } : undefined,
         }));
         setConversations(conversations);
 
         // Tải danh sách bạn bè
         const friendsResponse = await friendsApi.getAll(token);
-        const friends = friendsResponse.friends.map(f => ({
+        const friends = friendsResponse.friends.map((f: any) => ({
           id: f.id,
           username: f.username,
           displayName: f.display_name,
           avatarUrl: f.avatar_url,
-          status: f.status as 'online' | 'offline',
+          status: f.status,
+          lastOnline: f.last_online ? new Date(f.last_online) : undefined,
         }));
         setFriends(friends);
 
@@ -107,22 +117,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <AppInitializer>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/chat"
-            element={
-              <ProtectedRoute>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <AppInitializer>
                 <Chat />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AppInitializer>
+              </AppInitializer>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

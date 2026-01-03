@@ -6,6 +6,7 @@ export interface Friend {
     displayName: string;
     avatarUrl?: string;
     status: 'online' | 'offline';
+    lastOnline?: Date;
 }
 
 export interface FriendRequest {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface Message {
     id: string;
+    clientId?: string;
     conversationId: string;
     senderId: string;
     content: string;
@@ -32,8 +33,10 @@ interface ChatState {
     setActiveConversation: (id: string | null) => void;
 
     setMessages: (conversationId: string, messages: Message[]) => void;
-    addMessage: (conversationId: string, message: Message) => void;
+    addMessage: (conversationId: string, message: Message, shouldIncrementUnread?: boolean) => void;
     updateMessageStatus: (conversationId: string, messageId: string, status: Message['status']) => void;
+    updateAllMessagesStatus: (conversationId: string, userId: string, status: Message['status']) => void;
+    resolveOptimisticMessage: (conversationId: string, clientId: string, serverId: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -48,22 +51,44 @@ export const useChatStore = create<ChatState>((set) => ({
             conversations: [conversation, ...state.conversations],
         })),
 
-    setActiveConversation: (id) => set({ activeConversationId: id }),
+    setActiveConversation: (id) => set((state) => ({
+        activeConversationId: id,
+        conversations: state.conversations.map(c =>
+            c.id === id ? { ...c, unreadCount: 0 } : c
+        )
+    })),
 
     setMessages: (conversationId, messages) =>
         set((state) => ({
             messages: { ...state.messages, [conversationId]: messages },
         })),
 
-    addMessage: (conversationId, message) =>
-        set((state) => ({
-            messages: {
-                ...state.messages,
-                [conversationId]: [...(state.messages[conversationId] || []), message],
-            },
-        })),
+    addMessage: (conversationId, message, shouldIncrementUnread = false) =>
+        set((state) => {
+            const existingMessages = state.messages[conversationId] || [];
+            if (existingMessages.some(m => m.id === message.id)) {
+                return state;
+            }
 
-    updateMessageStatus: (conversationId, messageId, status) =>
+            return {
+                messages: {
+                    ...state.messages,
+                    [conversationId]: [...existingMessages, message],
+                },
+
+                conversations: state.conversations.map(conv => {
+                    if (conv.id !== conversationId) return conv;
+
+                    return {
+                        ...conv,
+                        lastMessage: message,
+                        unreadCount: shouldIncrementUnread ? conv.unreadCount + 1 : conv.unreadCount
+                    };
+                }),
+            };
+        }),
+
+    updateMessageStatus: (conversationId: string, messageId: string, status) =>
         set((state) => ({
             messages: {
                 ...state.messages,
@@ -72,4 +97,40 @@ export const useChatStore = create<ChatState>((set) => ({
                 ),
             },
         })),
+
+    updateAllMessagesStatus: (conversationId: string, userId: string, status) =>
+        set((state) => ({
+            messages: {
+                ...state.messages,
+                [conversationId]: (state.messages[conversationId] || []).map((msg) =>
+                    msg.senderId !== userId ? { ...msg, status } : msg
+                ),
+            },
+        })),
+
+    resolveOptimisticMessage: (conversationId, clientId, serverId) =>
+        set((state) => {
+            const existingMessages = state.messages[conversationId] || [];
+
+            const updatedMessages: Message[] = existingMessages.map((msg) =>
+                msg.clientId === clientId ? { ...msg, id: serverId, status: 'sent' as const } : msg
+            );
+
+            return {
+                messages: {
+                    ...state.messages,
+                    [conversationId]: updatedMessages,
+                },
+
+                conversations: state.conversations.map(conv => {
+                    if (conv.id !== conversationId || !conv.lastMessage || conv.lastMessage.clientId !== clientId) {
+                        return conv;
+                    }
+                    return {
+                        ...conv,
+                        lastMessage: { ...conv.lastMessage, id: serverId, status: 'sent' as const }
+                    };
+                }),
+            };
+        }),
 }));

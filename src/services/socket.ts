@@ -1,53 +1,138 @@
-import WebSocket from '@tauri-apps/plugin-websocket';
 import { useSocketStore } from '../stores/socketStore';
+import { useAuthStore } from '../stores/authStore';
 import { useChatStore, type Message } from '../stores/chatStore';
+import { useFriendStore, type Friend, type FriendRequest } from '../stores/friendStore';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws';
 
-let ws: Awaited<ReturnType<typeof WebSocket.connect>> | null = null;
+let ws: WebSocket | null = null;
+let currentToken: string | null = null;
+let connectionPromise: Promise<void> | null = null;
+let messageQueue: { event: string; data: unknown }[] = [];
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
 export const socketService = {
     connect: async (token: string) => {
         const socketStore = useSocketStore.getState();
 
         if (ws) {
-            await ws.disconnect();
+            if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+                if (currentToken === token) {
+                    return connectionPromise || Promise.resolve();
+                }
+                ws.close();
+            }
+
+            if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+                ws = null;
+            }
         }
 
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+
+        currentToken = token;
         socketStore.setConnecting(true);
 
-        try {
-            ws = await WebSocket.connect(`${WS_URL}?token=${token}`);
+        connectionPromise = new Promise<void>((resolve, reject) => {
+            try {
+                ws = new WebSocket(`${WS_URL}?token=${token}`);
 
-            ws.addListener((msg) => {
-                if (msg.type === 'Text') {
-                    const data = JSON.parse(msg.data as string);
-                    handleMessage(data);
-                }
-            });
+                ws.onopen = () => {
+                    socketStore.setConnected(true);
+                    socketService.startHeartbeat();
 
-            socketStore.setConnected(true);
-        } catch (error) {
-            socketStore.setError((error as Error).message);
-        }
+                    while (messageQueue.length > 0) {
+                        const msg = messageQueue.shift();
+                        if (msg) socketService.send(msg.event, msg.data);
+                    }
+
+                    resolve();
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleMessage(data);
+                    } catch (e) {
+                    }
+                };
+
+                ws.onerror = () => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                    } else {
+                        socketStore.setError('WebSocket connection error');
+                        connectionPromise = null;
+                    }
+                };
+
+                ws.onclose = () => {
+                    socketStore.setConnected(false);
+                    socketService.stopHeartbeat();
+                    ws = null;
+                    connectionPromise = null;
+
+                    // Tự động kết nối lại nếu bị ngắt kết nối không mong muốn
+                    if (currentToken === token) {
+                        setTimeout(() => {
+                            if (currentToken === token) {
+                                socketService.connect(token).catch(() => { });
+                            }
+                        }, 1000);
+                    }
+                };
+            } catch (error) {
+                socketStore.setError((error as Error).message);
+                connectionPromise = null;
+                reject(error);
+            }
+        });
+
+        return connectionPromise;
     },
 
     disconnect: async () => {
+        currentToken = null;
+        connectionPromise = null;
+        socketService.stopHeartbeat();
+
         if (ws) {
-            await ws.disconnect();
+            ws.close();
             ws = null;
         }
         useSocketStore.getState().setConnected(false);
     },
 
-    send: async (event: string, data: unknown) => {
-        if (ws) {
-            await ws.send(JSON.stringify({ event, data }));
+    startHeartbeat: () => {
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ event: 'ping', data: {} }));
+            }
+        }, 10000);
+    },
+
+    stopHeartbeat: () => {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
         }
     },
 
-    sendMessage: async (conversationId: string, content: string, type: 'text' | 'file' = 'text') => {
-        await socketService.send('message:send', { conversationId, content, type });
+    send: async (event: string, data: unknown) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ event, data }));
+        } else {
+            if (currentToken && (!ws || ws.readyState === WebSocket.CLOSED)) {
+                socketService.connect(currentToken).catch(() => { });
+            }
+        }
+    },
+
+    sendMessage: async (conversationId: string, content: string, type: 'text' | 'file' = 'text', clientId?: string) => {
+        await socketService.send('message:send', { conversationId, content, type, clientId });
     },
 
     sendTyping: async (conversationId: string) => {
@@ -57,10 +142,19 @@ export const socketService = {
     markAsRead: async (conversationId: string, messageId: string) => {
         await socketService.send('message:read', { conversationId, messageId });
     },
+
+    markConversationAsRead: async (conversationId: string) => {
+        await socketService.send('message:read_all', { conversationId });
+    },
+
+    isConnected: () => {
+        return ws !== null && ws.readyState === WebSocket.OPEN;
+    },
 };
 
 interface BackendMessage {
     _id: string;
+    clientId?: string;
     conversation_id: string;
     sender_id: string;
     content: string;
@@ -69,14 +163,28 @@ interface BackendMessage {
     created_at: string;
 }
 
+interface BackendFriendInfo {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url?: string;
+    status: 'online' | 'offline';
+}
+
 function handleMessage(data: { event: string; payload: unknown }) {
     const chatStore = useChatStore.getState();
+    const friendStore = useFriendStore.getState();
+    const authStore = useAuthStore.getState();
 
     switch (data.event) {
         case 'message:new': {
             const backendMsg = data.payload as BackendMessage;
 
-            // Chuyển đổi định dạng backend sang định dạng Message của frontend
+            if (backendMsg.clientId && backendMsg.sender_id === authStore.user?.id) {
+                chatStore.resolveOptimisticMessage(backendMsg.conversation_id, backendMsg.clientId, backendMsg._id);
+                return;
+            }
+
             const message: Message = {
                 id: backendMsg._id,
                 conversationId: backendMsg.conversation_id,
@@ -86,7 +194,13 @@ function handleMessage(data: { event: string; payload: unknown }) {
                 status: backendMsg.status[0]?.status as Message['status'] || 'sent',
                 createdAt: new Date(backendMsg.created_at),
             };
-            chatStore.addMessage(message.conversationId, message);
+
+            const currentUserId = authStore.user?.id;
+            const isOwnMessage = message.senderId === currentUserId;
+            const isInactiveConversation = chatStore.activeConversationId !== message.conversationId;
+            const shouldIncrementUnread = !isOwnMessage && isInactiveConversation;
+
+            chatStore.addMessage(message.conversationId, message, shouldIncrementUnread);
             break;
         }
         case 'message:status': {
@@ -96,6 +210,74 @@ function handleMessage(data: { event: string; payload: unknown }) {
                 status: Message['status'];
             };
             chatStore.updateMessageStatus(conversationId, messageId, status);
+            break;
+        }
+        case 'message:read_all': {
+            const { conversationId, userId } = data.payload as {
+                conversationId: string;
+                userId: string;
+            };
+
+            chatStore.updateAllMessagesStatus(conversationId, userId, 'read');
+            break;
+        }
+        case 'user:status': {
+            const { userId, status, lastOnline } = data.payload as { userId: string; status: 'online' | 'offline'; lastOnline?: string };
+
+            const friends = friendStore.friends.map(f =>
+                f.id === userId ? {
+                    ...f,
+                    status,
+                    lastOnline: lastOnline ? new Date(lastOnline) : f.lastOnline
+                } : f
+            );
+
+            friendStore.setFriends(friends);
+            break;
+        }
+
+        case 'friend:request_received': {
+            const reqPayload = data.payload as {
+                id: string;
+                from_user_id: string;
+                from_user_name: string;
+                from_user_avatar?: string;
+                status: 'pending';
+                created_at: string;
+            };
+
+            const newRequest: FriendRequest = {
+                id: reqPayload.id,
+                fromUserId: reqPayload.from_user_id,
+                fromUserName: reqPayload.from_user_name,
+                fromUserAvatar: reqPayload.from_user_avatar,
+                toUserId: '',
+                toUserName: '',
+                status: 'pending',
+                createdAt: new Date(reqPayload.created_at),
+            };
+
+            friendStore.addFriendRequest(newRequest);
+            break;
+        }
+
+        case 'friend:request_accepted': {
+            const { request_id, new_friend } = data.payload as {
+                request_id: string;
+                new_friend: BackendFriendInfo;
+            };
+
+            friendStore.removeSentRequest(request_id);
+
+            const friend: Friend = {
+                id: new_friend.id,
+                username: new_friend.username,
+                displayName: new_friend.display_name,
+                avatarUrl: new_friend.avatar_url,
+                status: new_friend.status,
+            };
+
+            friendStore.addFriend(friend);
             break;
         }
     }

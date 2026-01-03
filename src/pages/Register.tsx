@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, AlertCircle, PencilLine } from 'lucide-react';
 import { authApi } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
@@ -17,7 +17,11 @@ export default function Register() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const navigate = useNavigate();
-    const { login } = useAuthStore();
+    const { login, isAuthenticated } = useAuthStore();
+
+    if (isAuthenticated) {
+        return <Navigate to="/chat" replace />;
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({

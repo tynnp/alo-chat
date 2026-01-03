@@ -6,13 +6,28 @@ import ChatHeader from '../components/Chat/ChatHeader';
 import MessageList from '../components/Chat/MessageList';
 import ChatInput from '../components/Chat/ChatInput';
 import { MessagesSquare } from 'lucide-react';
-import { useChatStore } from '../stores/chatStore';
+import { useChatStore, type Message } from '../stores/chatStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFriendStore } from '../stores/friendStore';
 import { conversationsApi, type MessageResponse } from '../services/api';
 import { socketService } from '../services/socket';
 
 type ChatTab = 'chat' | 'contacts';
+
+function formatRelativeTime(date?: Date): string | undefined {
+    if (!date) return undefined;
+    const diff = Math.max(0, Date.now() - date.getTime());
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return 'vừa xong';
+    if (minutes < 60) return `${minutes} phút trước`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+
+    const days = Math.floor(hours / 24);
+    return `${days} ngày trước`;
+}
 
 export default function Chat() {
     const [activeTab, setActiveTab] = useState<ChatTab>('chat');
@@ -23,14 +38,27 @@ export default function Chat() {
         conversations,
         activeConversationId,
         setActiveConversation,
+        addConversation,
         messages,
-        setMessages
+        setMessages,
+        addMessage
     } = useChatStore();
     const { friends } = useFriendStore();
 
     // Lấy conversation hiện tại
     const activeConversation = conversations.find(c => c.id === activeConversationId);
     const currentMessages = activeConversationId ? messages[activeConversationId] || [] : [];
+
+    useEffect(() => {
+        if (!activeConversationId || !user) return;
+
+        const hasUnread = currentMessages.some(m => m.senderId !== user.id && m.status !== 'read');
+
+        if (hasUnread) {
+            // Sử dụng batch read receipts để tối ưu hiệu suất
+            socketService.markConversationAsRead(activeConversationId);
+        }
+    }, [activeConversationId, currentMessages.length, user?.id]);
 
     // Tải tin nhắn khi chọn cuộc hội thoại
     useEffect(() => {
@@ -62,7 +90,7 @@ export default function Chat() {
     };
 
     const handleSelectContact = async (friendId: string) => {
-        if (!token) return;
+        if (!token || !user) return;
 
         // Tìm hoặc tạo cuộc hội thoại với người bạn này
         try {
@@ -70,6 +98,19 @@ export default function Chat() {
                 type: 'private',
                 member_ids: [friendId]
             });
+
+            const existingConv = conversations.find(c => c.id === response._id);
+
+            if (!existingConv) {
+                addConversation({
+                    id: response._id,
+                    type: response.type,
+                    name: response.name,
+                    members: response.members.map(m => m.user_id),
+                    unreadCount: 0,
+                    createdAt: new Date(response.created_at),
+                });
+            }
 
             setActiveTab('chat');
             setActiveConversation(response._id);
@@ -80,10 +121,25 @@ export default function Chat() {
     };
 
     const handleSendMessage = async (content: string) => {
-        if (!activeConversationId) return;
+        if (!activeConversationId || !user) return;
+
+        const clientId = Date.now().toString() + Math.random().toString(36).substring(7);
+
+        const optimisticMessage: Message = {
+            id: clientId,
+            clientId,
+            conversationId: activeConversationId,
+            senderId: user.id,
+            content: content,
+            type: 'text',
+            status: 'sending',
+            createdAt: new Date(),
+        };
+
+        addMessage(activeConversationId, optimisticMessage);
 
         try {
-            await socketService.sendMessage(activeConversationId, content);
+            await socketService.sendMessage(activeConversationId, content, 'text', clientId);
         } catch (error) {
             console.error('Failed to send message:', error);
         }
@@ -117,7 +173,7 @@ export default function Chat() {
             name: friend?.displayName || activeConversation.name || 'Người dùng',
             type: 'private' as const,
             status: friend?.status || 'offline',
-            lastOnline: '5 phút trước',
+            lastOnline: formatRelativeTime(friend?.lastOnline),
         };
     };
 
@@ -144,9 +200,9 @@ export default function Chat() {
             )}
 
             {/* 3. Main Chat Area */}
-            <div className="flex-1 flex flex-col bg-gray-50">
+            <div className="flex-1 flex flex-col bg-gray-50 min-h-0">
                 {activeConversation && displayInfo ? (
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-h-0">
                         {/* Chat Header */}
                         <ChatHeader conversation={{
                             id: activeConversation.id,
@@ -165,7 +221,7 @@ export default function Chat() {
                                 senderId: msg.senderId,
                                 timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                                 type: msg.type as 'text' | 'image' | 'file',
-                                status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : 'sent',
+                                status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent',
                             }))}
                             currentUserId={user?.id || ''}
                         />

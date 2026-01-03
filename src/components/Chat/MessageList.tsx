@@ -7,7 +7,7 @@ interface Message {
     senderId: string;
     timestamp: string;
     type: 'text' | 'image' | 'file';
-    status?: 'sent' | 'received' | 'read';
+    status?: 'sending' | 'sent' | 'received' | 'read';
 }
 
 interface MessageListProps {
@@ -56,6 +56,7 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
                                 {msg.timestamp}
                                 {isOwn && msg.status && (
                                     <span>
+                                        {msg.status === 'sending' && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                                         {msg.status === 'sent' && <Check className="w-3 h-3" />}
                                         {msg.status === 'received' && <CheckCheck className="w-3 h-3" />}
                                         {msg.status === 'read' && <CheckCheck className="w-3 h-3 text-blue-300" />}
