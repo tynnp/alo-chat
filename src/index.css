@@ -26,4 +26,10 @@
     background-color: #f9fafb;
     overflow-x: hidden;
   }
+
+  /* Ẩn nút hiển thị mật khẩu mặc định trên Edge/IE */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
 }
