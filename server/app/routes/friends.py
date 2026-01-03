@@ -171,7 +171,7 @@ async def send_friend_request(data: FriendRequestCreate, current_user: dict = De
             "from_user_name": from_user_info["display_name"] if from_user_info else "",
             "from_user_avatar": from_user_info.get("avatar_url") if from_user_info else None,
             "status": "pending",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
     }, to_user_id)
     
@@ -196,7 +196,7 @@ async def accept_friend_request(request_id: str, current_user: dict = Depends(ge
     # Cập nhật status
     await db.friendships.update_one(
         {"_id": ObjectId(request_id)},
-        {"$set": {"status": "accepted", "accepted_at": datetime.utcnow()}}
+        {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc)}}
     )
     
     # Gửi WebSocket notification đến người đã gửi lời mời
@@ -232,7 +232,7 @@ async def reject_friend_request(request_id: str, current_user: dict = Depends(ge
     # Cập nhật status
     await db.friendships.update_one(
         {"_id": ObjectId(request_id)},
-        {"$set": {"status": "rejected", "rejected_at": datetime.utcnow()}}
+        {"$set": {"status": "rejected", "rejected_at": datetime.now(timezone.utc)}}
     )
     
     return {"message": "Đã từ chối lời mời kết bạn"}

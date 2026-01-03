@@ -1,6 +1,7 @@
 import { MessagesSquare, Users, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
+import { socketService } from '../../services/socket';
 
 interface NavigationSidebarProps {
     activeTab: 'chat' | 'contacts';
@@ -51,7 +52,14 @@ export default function NavigationSidebar({ activeTab, setActiveTab }: Navigatio
                 <button className="p-2 text-gray-500 hover:bg-blue-100 hover:text-blue-600 rounded-xl transition-all" title="Settings">
                     <Settings className="w-5 h-5" />
                 </button>
-                <button onClick={logout} className="p-2 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all" title="Logout">
+                <button
+                    onClick={() => {
+                        socketService.disconnect();
+                        logout();
+                    }}
+                    className="p-2 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"
+                    title="Logout"
+                >
                     <LogOut className="w-5 h-5" />
                 </button>
             </div>

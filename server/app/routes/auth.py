@@ -67,7 +67,7 @@ async def login(credentials: UserLogin):
     # Cập nhật thời gian online
     await db.users.update_one(
         {"_id": user["_id"]},
-        {"$set": {"last_online": datetime.utcnow(), "status": "online"}}
+        {"$set": {"last_online": datetime.now(timezone.utc), "status": "online"}}
     )
     
     return {

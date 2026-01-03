@@ -204,7 +204,7 @@ async def handle_conversation_read(user_id: str, payload: dict, db):
             "sender_id": {"$ne": user_id},
             "status.user_id": {"$ne": user_id}
         },
-        {"$push": {"status": {"user_id": user_id, "status": "read", "at": datetime.utcnow()}}}
+        {"$push": {"status": {"user_id": user_id, "status": "read", "at": datetime.now(timezone.utc)}}}
     )
     
     conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
@@ -225,7 +225,7 @@ async def handle_message_read(user_id: str, payload: dict, db):
     
     await db.messages.update_one(
         {"_id": ObjectId(message_id)},
-        {"$push": {"status": {"user_id": user_id, "status": "read", "at": datetime.utcnow()}}}
+        {"$push": {"status": {"user_id": user_id, "status": "read", "at": datetime.now(timezone.utc)}}}
     )
     
     # Thông báo cho người gửi
