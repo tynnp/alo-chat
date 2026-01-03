@@ -51,7 +51,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
             }).toString();
 
             const winWidth = 380;
-            const winHeight = 120;
+            const winHeight = 88;
 
             const webview = new WebviewWindow(label, {
                 url: `/notification-pop?${queryParams}`,
