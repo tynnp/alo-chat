@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Alo Chat",
+  "productName": "ALO Chat",
   "version": "0.1.0",
   "identifier": "com.alochat.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Alo Chat",
+        "title": "ALO Chat",
         "width": 1200,
         "height": 800,
         "resizable": true,
