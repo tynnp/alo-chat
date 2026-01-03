@@ -1,13 +1,14 @@
-import { Phone, Video, Info, Cloud } from 'lucide-react';
+import { Phone, Video, Info, Cloud, Users } from 'lucide-react';
 
 interface ChatHeaderProps {
     conversation: {
-        id: number;
+        id: string;
         name: string;
         avatar?: string | null;
-        status?: string; // 'online' | 'offline'
-        lastOnline?: string; // e.g., '5 phút trước'
-        type: string; // 'private' | 'group' | 'self'
+        status?: 'online' | 'offline';
+        lastOnline?: string;
+        type: 'private' | 'group' | 'self';
+        memberCount?: number;
     };
 }
 
@@ -20,7 +21,9 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold
                         ${conversation.type === 'self' ? 'bg-indigo-100 text-indigo-600' :
                             conversation.type === 'group' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {conversation.type === 'self' ? <Cloud className="w-6 h-6" /> : conversation.name.charAt(0).toUpperCase()}
+                        {conversation.type === 'self' ? <Cloud className="w-6 h-6" /> :
+                            conversation.type === 'group' ? <Users className="w-5 h-5" /> :
+                                conversation.name.charAt(0).toUpperCase()}
                     </div>
 
                     {/* Online Status Dot */}
@@ -38,7 +41,9 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
                             conversation.status === 'online' ? 'Đang hoạt động' :
                                 `Hoạt động ${conversation.lastOnline || 'gần đây'}`
                         ) : (
-                            conversation.type === 'group' ? '3 thành viên' : 'Cloud của tôi'
+                            conversation.type === 'group' ?
+                                `${conversation.memberCount || 0} thành viên` :
+                                'Cloud của tôi'
                         )}
                     </p>
                 </div>
@@ -46,13 +51,17 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-1">
-                <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all" title="Gọi thoại">
-                    <Phone className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all" title="Gọi video">
-                    <Video className="w-5 h-5" />
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-2"></div>
+                {conversation.type !== 'self' && (
+                    <>
+                        <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all" title="Gọi thoại">
+                            <Phone className="w-5 h-5" />
+                        </button>
+                        <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all" title="Gọi video">
+                            <Video className="w-5 h-5" />
+                        </button>
+                        <div className="w-px h-6 bg-gray-200 mx-2"></div>
+                    </>
+                )}
                 <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-50 rounded-full transition-all" title="Thông tin hội thoại">
                     <Info className="w-5 h-5" />
                 </button>

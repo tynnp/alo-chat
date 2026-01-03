@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NavigationSidebar from '../components/Chat/NavigationSidebar';
 import ChatListSidebar from '../components/Chat/ChatListSidebar';
 import ContactListSidebar from '../components/Chat/ContactListSidebar';
@@ -6,27 +6,122 @@ import ChatHeader from '../components/Chat/ChatHeader';
 import MessageList from '../components/Chat/MessageList';
 import ChatInput from '../components/Chat/ChatInput';
 import { MessagesSquare } from 'lucide-react';
+import { useChatStore } from '../stores/chatStore';
+import { useAuthStore } from '../stores/authStore';
+import { useFriendStore } from '../stores/friendStore';
+import { conversationsApi, type MessageResponse } from '../services/api';
+import { socketService } from '../services/socket';
 
 type ChatTab = 'chat' | 'contacts';
 
 export default function Chat() {
     const [activeTab, setActiveTab] = useState<ChatTab>('chat');
-    const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
     const [sidebarWidth, setSidebarWidth] = useState(320);
 
-    const handleSelectConversation = (id: number) => {
-        setSelectedConversationId(id);
-        // Logic tải thông tin cuộc trò chuyện
+    const { token, user } = useAuthStore();
+    const {
+        conversations,
+        activeConversationId,
+        setActiveConversation,
+        messages,
+        setMessages
+    } = useChatStore();
+    const { friends } = useFriendStore();
+
+    // Lấy conversation hiện tại
+    const activeConversation = conversations.find(c => c.id === activeConversationId);
+    const currentMessages = activeConversationId ? messages[activeConversationId] || [] : [];
+
+    // Tải tin nhắn khi chọn cuộc hội thoại
+    useEffect(() => {
+        if (!activeConversationId || !token) return;
+
+        const fetchMessages = async () => {
+            try {
+                const response = await conversationsApi.getMessages(token, activeConversationId);
+                const msgs = response.messages.map((msg: MessageResponse) => ({
+                    id: msg._id,
+                    conversationId: msg.conversation_id,
+                    senderId: msg.sender_id,
+                    content: msg.content,
+                    type: msg.type,
+                    status: msg.status[0]?.status || 'sent',
+                    createdAt: new Date(msg.created_at),
+                }));
+                setMessages(activeConversationId, msgs);
+            } catch (error) {
+                console.error('Failed to fetch messages:', error);
+            }
+        };
+
+        fetchMessages();
+    }, [activeConversationId, token]);
+
+    const handleSelectConversation = (id: string) => {
+        setActiveConversation(id);
     };
 
-    const handleSelectContact = (id: number) => {
-        // Hiện tại chuyển sang tab chat và giả lập mở cuộc trò chuyện
-        console.log(`Starting chat with contact ${id}`);
-        setActiveTab('chat');
+    const handleSelectContact = async (friendId: string) => {
+        if (!token) return;
 
-        // Trong ứng dụng thực tế, sẽ tìm hoặc tạo ID cuộc trò chuyện cho liên hệ này
-        // setSelectedConversationId(newConversationId);
+        // Tìm hoặc tạo cuộc hội thoại với người bạn này
+        try {
+            const response = await conversationsApi.create(token, {
+                type: 'private',
+                member_ids: [friendId]
+            });
+
+            setActiveTab('chat');
+            setActiveConversation(response._id);
+        } catch (error) {
+            console.error('Failed to create conversation:', error);
+            alert((error as Error).message);
+        }
     };
+
+    const handleSendMessage = async (content: string) => {
+        if (!activeConversationId) return;
+
+        try {
+            await socketService.sendMessage(activeConversationId, content);
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        }
+    };
+
+    // Lấy thông tin hiển thị của cuộc hội thoại
+    const getConversationDisplayInfo = () => {
+        if (!activeConversation) return null;
+
+        if (activeConversation.type === 'self') {
+            return {
+                name: 'Cloud của tôi',
+                type: 'self' as const,
+                status: 'online' as const,
+            };
+        }
+
+        if (activeConversation.type === 'group') {
+            return {
+                name: activeConversation.name || 'Nhóm chat',
+                type: 'group' as const,
+                memberCount: activeConversation.members.length,
+            };
+        }
+
+        // Chat cá nhân - tìm tên người nhận
+        const otherId = activeConversation.members.find(id => id !== user?.id);
+        const friend = friends.find(f => f.id === otherId);
+
+        return {
+            name: friend?.displayName || activeConversation.name || 'Người dùng',
+            type: 'private' as const,
+            status: friend?.status || 'offline',
+            lastOnline: '5 phút trước',
+        };
+    };
+
+    const displayInfo = getConversationDisplayInfo();
 
     return (
         <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -50,40 +145,33 @@ export default function Chat() {
 
             {/* 3. Main Chat Area */}
             <div className="flex-1 flex flex-col bg-gray-50">
-                {selectedConversationId ? (
+                {activeConversation && displayInfo ? (
                     <div className="flex-1 flex flex-col">
                         {/* Chat Header */}
                         <ChatHeader conversation={{
-                            id: selectedConversationId,
-                            name: selectedConversationId === 1 ? 'Cloud của tôi' : (selectedConversationId === 2 ? 'Team Dev' : 'Nguyễn Văn A'),
-                            type: selectedConversationId === 1 ? 'self' : (selectedConversationId === 2 ? 'group' : 'private'),
-                            status: selectedConversationId === 3 ? 'online' : 'offline',
-                            lastOnline: '5 phút trước'
+                            id: activeConversation.id,
+                            name: displayInfo.name,
+                            type: displayInfo.type,
+                            status: 'status' in displayInfo ? displayInfo.status : undefined,
+                            lastOnline: 'lastOnline' in displayInfo ? displayInfo.lastOnline : undefined,
+                            memberCount: 'memberCount' in displayInfo ? displayInfo.memberCount : undefined,
                         }} />
 
                         {/* Message List */}
                         <MessageList
-                            messages={(
-                                selectedConversationId === 1 ? [
-                                    { id: 1, content: 'Lưu file cấu hình tailwind.config.js vào đây nhé', senderId: 999, timestamp: '10:28', type: 'text', status: 'read' },
-                                    { id: 2, content: 'File: tailwind.config.js', senderId: 999, timestamp: '10:30', type: 'file', status: 'read' },
-                                ] :
-                                    selectedConversationId === 2 ? [
-                                        { id: 1, content: 'Mọi người báo cáo tiến độ nhé', senderId: 3, timestamp: '09:00', type: 'text' },
-                                        { id: 2, content: 'Frontend đã xong UI login', senderId: 999, timestamp: '09:10', type: 'text', status: 'read' },
-                                        { id: 3, content: 'Họp lúc 2h chiều nhé', senderId: 3, timestamp: '09:15', type: 'text' },
-                                    ] :
-                                        [
-                                            { id: 1, content: 'Xin chào! Dự án thế nào rồi?', senderId: 2, timestamp: '09:30 Hôm qua', type: 'text' },
-                                            { id: 2, content: 'Mọi thứ vẫn đang đúng tiến độ, check mail nhé', senderId: 999, timestamp: '09:45 Hôm qua', type: 'text', status: 'read' },
-                                            { id: 3, content: 'Ok, đã nhận được mail', senderId: 2, timestamp: '10:00 Hôm qua', type: 'text' },
-                                        ]
-                            )}
-                            currentUserId={999} // ID người dùng giả lập
+                            messages={currentMessages.map(msg => ({
+                                id: msg.id,
+                                content: msg.content,
+                                senderId: msg.senderId,
+                                timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                                type: msg.type as 'text' | 'image' | 'file',
+                                status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : 'sent',
+                            }))}
+                            currentUserId={user?.id || ''}
                         />
 
                         {/* Input Area */}
-                        <ChatInput onSendMessage={(msg) => console.log('Sending:', msg)} />
+                        <ChatInput onSendMessage={handleSendMessage} />
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

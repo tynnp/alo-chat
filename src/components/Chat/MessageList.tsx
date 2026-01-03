@@ -2,9 +2,9 @@ import { useRef, useEffect } from 'react';
 import { Check, CheckCheck } from 'lucide-react';
 
 interface Message {
-    id: number;
+    id: string;
     content: string;
-    senderId: number;
+    senderId: string;
     timestamp: string;
     type: 'text' | 'image' | 'file';
     status?: 'sent' | 'received' | 'read';
@@ -12,11 +12,23 @@ interface Message {
 
 interface MessageListProps {
     messages: Message[];
-    currentUserId: number;
+    currentUserId: string;
 }
 
 export default function MessageList({ messages, currentUserId }: MessageListProps) {
-    // Logic cuộn xuống cuối danh sách sẽ ở đây
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    if (messages.length === 0) {
+        return (
+            <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <p className="text-gray-400 text-sm">Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 custom-scrollbar">
@@ -28,7 +40,6 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
                         ${isOwn ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
                         {isOwn ? 'T' : 'N'}
-                        {/* 'N' chỉ là placeholder. Trong thực tế, dùng msg.senderName.charAt(0) hoặc avatarUrl */}
                     </div>
                 );
 
@@ -47,7 +58,7 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
                                     <span>
                                         {msg.status === 'sent' && <Check className="w-3 h-3" />}
                                         {msg.status === 'received' && <CheckCheck className="w-3 h-3" />}
-                                        {msg.status === 'read' && <CheckCheck className="w-3 h-3 text-blue-500" />}
+                                        {msg.status === 'read' && <CheckCheck className="w-3 h-3 text-blue-300" />}
                                     </span>
                                 )}
                             </span>
@@ -57,6 +68,7 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
                     </div>
                 );
             })}
+            <div ref={messagesEndRef} />
         </div>
     );
 }

@@ -1,3 +1,3 @@
-export { apiRequest, authApi, conversationsApi, usersApi } from './api';
+export { apiRequest, authApi, conversationsApi, usersApi, friendsApi } from './api';
 export { socketService } from './socket';
 export { notificationService, fileService } from './tauri';

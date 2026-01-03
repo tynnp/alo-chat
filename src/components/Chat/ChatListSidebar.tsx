@@ -1,14 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Search, PlusCircle, Cloud } from 'lucide-react';
+import { useChatStore } from '../../stores/chatStore';
+import { useAuthStore } from '../../stores/authStore';
+import { useFriendStore } from '../../stores/friendStore';
 
 interface ChatListSidebarProps {
-    onSelectConversation: (id: number) => void;
+    onSelectConversation: (id: string) => void;
     width: number;
     setWidth: (width: number) => void;
 }
 
 export default function ChatListSidebar({ onSelectConversation, width, setWidth }: ChatListSidebarProps) {
     const isResizing = useRef(false);
+    const { conversations, activeConversationId } = useChatStore();
+    const { user } = useAuthStore();
+    const { friends } = useFriendStore();
 
     // Xử lý thay đổi kích thước
     useEffect(() => {
@@ -23,7 +29,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
         const handleMouseUp = () => {
             isResizing.current = false;
             document.body.style.cursor = 'default';
-            document.body.style.userSelect = 'auto'; // Khôi phục chọn văn bản
+            document.body.style.userSelect = 'auto';
         };
 
         document.addEventListener('mousemove', handleMouseMove);
@@ -35,14 +41,56 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
             document.body.style.cursor = 'default';
             document.body.style.userSelect = 'auto';
         };
-    }, []);
+    }, [setWidth]);
 
-    // Dữ liệu giả cho các cuộc trò chuyện
-    const conversations = [
-        { id: 1, name: 'Cloud của tôi', lastMessage: 'File: tailwind.config.js', time: '10:30', unread: 0, avatar: null, type: 'self' },
-        { id: 2, name: 'Team Dev', lastMessage: 'Họp lúc 2h chiều nhé', time: '09:15', unread: 3, avatar: null, type: 'group' },
-        { id: 3, name: 'Nguyễn Văn A', lastMessage: 'Ok, đã nhận được mail', time: 'Hôm qua', unread: 0, avatar: null, type: 'private' },
-    ];
+    const getConversationDisplay = (conv: typeof conversations[0]) => {
+        if (conv.type === 'self') {
+            return {
+                name: 'Cloud của tôi',
+                lastMessage: conv.lastMessage?.content || 'Lưu trữ cá nhân',
+                avatar: null,
+                type: 'self' as const,
+            };
+        }
+
+        if (conv.type === 'group') {
+            return {
+                name: conv.name || 'Nhóm chat',
+                lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
+                avatar: null,
+                type: 'group' as const,
+            };
+        }
+
+        // Private chat - tìm người còn lại
+        const otherId = conv.members.find(id => id !== user?.id);
+        const friend = friends.find(f => f.id === otherId);
+
+        return {
+            name: friend?.displayName || conv.name || 'Người dùng',
+            lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
+            avatar: friend?.avatarUrl || null,
+            type: 'private' as const,
+        };
+    };
+
+    // Format thời gian
+    const formatTime = (date?: Date) => {
+        if (!date) return '';
+        const now = new Date();
+        const diff = now.getTime() - new Date(date).getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (days === 0) {
+            return new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        } else if (days === 1) {
+            return 'Hôm qua';
+        } else if (days < 7) {
+            return `${days} ngày trước`;
+        } else {
+            return new Date(date).toLocaleDateString('vi-VN');
+        }
+    };
 
     return (
         <div
@@ -72,38 +120,55 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
             {/* Conversation List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <div className="space-y-1 px-2 pt-2">
-                    {conversations.map(conv => (
-                        <div
-                            key={conv.id}
-                            onClick={() => onSelectConversation(conv.id)}
-                            className="group p-3 flex items-center gap-3 rounded-xl hover:bg-blue-50 cursor-pointer transition-colors"
-                        >
-                            <div className="relative">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold
-                                    ${conv.type === 'self' ? 'bg-indigo-100 text-indigo-600' :
-                                        conv.type === 'group' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                                    {conv.type === 'self' ? <Cloud className="w-6 h-6" /> : conv.name.charAt(0).toUpperCase()}
-                                </div>
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                    <h4 className="font-semibold text-gray-800 truncate">{conv.name}</h4>
-                                    <span className="text-xs text-gray-400 whitespace-nowrap">{conv.time}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <p className={`text-sm truncate mr-4 ${conv.unread > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
-                                        {conv.lastMessage}
-                                    </p>
-                                    {conv.unread > 0 && (
-                                        <div className="w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">
-                                            {conv.unread}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                    {conversations.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                            <p className="text-sm">Chưa có cuộc trò chuyện nào</p>
+                            <p className="text-xs mt-1">Hãy kết bạn và bắt đầu trò chuyện!</p>
                         </div>
-                    ))}
+                    ) : (
+                        conversations.map(conv => {
+                            const display = getConversationDisplay(conv);
+                            const isActive = conv.id === activeConversationId;
+
+                            return (
+                                <div
+                                    key={conv.id}
+                                    onClick={() => onSelectConversation(conv.id)}
+                                    className={`group p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-colors
+                                        ${isActive ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                                >
+                                    <div className="relative">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold
+                                            ${display.type === 'self' ? 'bg-indigo-100 text-indigo-600' :
+                                                display.type === 'group' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                                            {display.type === 'self' ? <Cloud className="w-6 h-6" /> : display.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <h4 className={`font-semibold truncate ${isActive ? 'text-blue-700' : 'text-gray-800'}`}>
+                                                {display.name}
+                                            </h4>
+                                            <span className="text-xs text-gray-400 whitespace-nowrap">
+                                                {formatTime(conv.lastMessage?.createdAt || conv.createdAt)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <p className={`text-sm truncate mr-4 ${conv.unreadCount > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
+                                                {display.lastMessage}
+                                            </p>
+                                            {conv.unreadCount > 0 && (
+                                                <div className="w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                                                    {conv.unreadCount}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 
@@ -113,7 +178,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                 onMouseDown={() => {
                     isResizing.current = true;
                     document.body.style.cursor = 'col-resize';
-                    document.body.style.userSelect = 'none'; // Chặn chọn văn bản
+                    document.body.style.userSelect = 'none';
                 }}
             />
         </div>

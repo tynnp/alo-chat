@@ -31,7 +31,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}):
     return response.json();
 }
 
-// Auth API
+// API Xác thực
 export const authApi = {
     login: (username: string, password: string) =>
         apiRequest<{ access_token: string; user: { id: string; username: string; display_name: string } }>(
@@ -52,20 +52,120 @@ export const authApi = {
         ),
 };
 
-// Conversations API
+// API Cuộc hội thoại
 export const conversationsApi = {
     getAll: (token: string) =>
-        apiRequest<{ conversations: unknown[] }>('/api/conversations', { token }),
+        apiRequest<{ conversations: ConversationResponse[] }>('/api/conversations', { token }),
 
-    create: (token: string, data: { type: string; name?: string; memberIds?: string[] }) =>
-        apiRequest<unknown>('/api/conversations', { method: 'POST', token, body: data }),
+    create: (token: string, data: { type: string; name?: string; member_ids?: string[] }) =>
+        apiRequest<ConversationResponse>('/api/conversations', { method: 'POST', token, body: data }),
 
     getMessages: (token: string, conversationId: string) =>
-        apiRequest<{ messages: unknown[] }>(`/api/conversations/${conversationId}/messages`, { token }),
+        apiRequest<{ messages: MessageResponse[] }>(`/api/conversations/${conversationId}/messages`, { token }),
 };
 
-// Users API
+// API Người dùng
 export const usersApi = {
     search: (token: string, query: string) =>
-        apiRequest<{ users: unknown[] }>(`/api/users/search?q=${encodeURIComponent(query)}`, { token }),
+        apiRequest<{ users: UserResponse[] }>(`/api/users/search?q=${encodeURIComponent(query)}`, { token }),
+
+    getById: (token: string, userId: string) =>
+        apiRequest<UserResponse>(`/api/users/${userId}`, { token }),
 };
+
+// API Bạn bè
+export const friendsApi = {
+    getAll: (token: string) =>
+        apiRequest<{ friends: FriendResponse[] }>('/api/friends', { token }),
+
+    getRequests: (token: string) =>
+        apiRequest<{ requests: FriendRequestResponse[] }>('/api/friends/requests', { token }),
+
+    getSentRequests: (token: string) =>
+        apiRequest<{ sent_requests: SentRequestResponse[] }>('/api/friends/sent', { token }),
+
+    sendRequest: (token: string, toUserId: string) =>
+        apiRequest<{ message: string; request_id: string }>('/api/friends/request', {
+            method: 'POST',
+            token,
+            body: { to_user_id: toUserId }
+        }),
+
+    acceptRequest: (token: string, requestId: string) =>
+        apiRequest<{ message: string }>(`/api/friends/accept/${requestId}`, { method: 'POST', token }),
+
+    rejectRequest: (token: string, requestId: string) =>
+        apiRequest<{ message: string }>(`/api/friends/reject/${requestId}`, { method: 'POST', token }),
+
+    unfriend: (token: string, friendId: string) =>
+        apiRequest<{ message: string }>(`/api/friends/${friendId}`, { method: 'DELETE', token }),
+
+    cancelRequest: (token: string, requestId: string) =>
+        apiRequest<{ message: string }>(`/api/friends/request/${requestId}`, { method: 'DELETE', token }),
+};
+
+// Các kiểu dữ liệu phản hồi (Response)
+export interface UserResponse {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url?: string;
+    status: 'online' | 'offline';
+}
+
+export interface FriendResponse {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url?: string;
+    status: 'online' | 'offline';
+}
+
+export interface FriendRequestResponse {
+    id: string;
+    from_user_id: string;
+    from_user_name: string;
+    from_user_avatar?: string;
+    to_user_id: string;
+    to_user_name: string;
+    to_user_avatar?: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    created_at: string;
+}
+
+export interface SentRequestResponse {
+    id: string;
+    to_user_id: string;
+    to_user_name: string;
+    to_user_avatar?: string;
+    status: 'pending';
+    created_at: string;
+}
+
+export interface ConversationResponse {
+    _id: string;
+    type: 'private' | 'group' | 'self';
+    name?: string;
+    members: Array<{
+        user_id: string;
+        role: 'admin' | 'member';
+        joined_at: string;
+    }>;
+    created_by: string;
+    created_at: string;
+    last_message_at?: string;
+}
+
+export interface MessageResponse {
+    _id: string;
+    conversation_id: string;
+    sender_id: string;
+    content: string;
+    type: 'text' | 'file' | 'image' | 'system';
+    status: Array<{
+        user_id: string;
+        status: 'sent' | 'delivered' | 'read';
+        at: string;
+    }>;
+    created_at: string;
+}

@@ -59,12 +59,33 @@ export const socketService = {
     },
 };
 
+interface BackendMessage {
+    _id: string;
+    conversation_id: string;
+    sender_id: string;
+    content: string;
+    type: 'text' | 'file' | 'image' | 'system';
+    status: Array<{ user_id: string; status: string; at: string }>;
+    created_at: string;
+}
+
 function handleMessage(data: { event: string; payload: unknown }) {
     const chatStore = useChatStore.getState();
 
     switch (data.event) {
         case 'message:new': {
-            const message = data.payload as Message;
+            const backendMsg = data.payload as BackendMessage;
+
+            // Chuyển đổi định dạng backend sang định dạng Message của frontend
+            const message: Message = {
+                id: backendMsg._id,
+                conversationId: backendMsg.conversation_id,
+                senderId: backendMsg.sender_id,
+                content: backendMsg.content,
+                type: backendMsg.type,
+                status: backendMsg.status[0]?.status as Message['status'] || 'sent',
+                createdAt: new Date(backendMsg.created_at),
+            };
             chatStore.addMessage(message.conversationId, message);
             break;
         }
