@@ -146,7 +146,7 @@ async def handle_message_send(sender_id: str, payload: dict, db):
     content = payload.get("content")
     msg_type = payload.get("type", "text")
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Tạo tin nhắn
     message = {
