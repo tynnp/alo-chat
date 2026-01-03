@@ -1,9 +1,9 @@
 import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/authStore';
-import { useChatStore, type Message } from '../stores/chatStore';
+import { useChatStore, type Message, type Conversation } from '../stores/chatStore';
 import { useFriendStore, type Friend, type FriendRequest } from '../stores/friendStore';
 import { useNotificationStore } from '../stores/notificationStore';
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, conversationsApi } from './api';
 
 const WS_URL = import.meta.env.VITE_WS_URL || API_BASE_URL.replace('http', 'ws').replace(/\/$/, '') + '/ws';
 
@@ -179,7 +179,7 @@ interface BackendFriendInfo {
 
 const processedMessages = new Set<string>();
 
-function handleMessage(data: { event: string; payload: unknown }) {
+async function handleMessage(data: { event: string; payload: unknown }) {
     const chatStore = useChatStore.getState();
     const friendStore = useFriendStore.getState();
     const authStore = useAuthStore.getState();
@@ -215,8 +215,38 @@ function handleMessage(data: { event: string; payload: unknown }) {
 
             const currentUserId = authStore.user?.id;
             const isOwnMessage = message.senderId === currentUserId;
+            const existingConv = chatStore.conversations.find(c => c.id === message.conversationId);
+            let isNewConversation = false;
+
+            if (!existingConv) {
+                isNewConversation = true;
+                const token = authStore.token;
+
+                if (token) {
+                    try {
+                        const response = await conversationsApi.getAll(token);
+                        const newConv = response.conversations.find(c => c._id === message.conversationId);
+                        if (newConv) {
+                            const conversation: Conversation = {
+                                id: newConv._id,
+                                type: newConv.type,
+                                name: newConv.name,
+                                members: newConv.members.map(m => m.user_id),
+                                isPinned: false,
+                                unreadCount: isOwnMessage ? 0 : 1,
+                                createdAt: new Date(newConv.created_at),
+                                lastMessage: message,
+                            };
+                            chatStore.addConversation(conversation);
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch new conversation:', error);
+                    }
+                }
+            }
+
             const isInactiveConversation = chatStore.activeConversationId !== message.conversationId;
-            const shouldIncrementUnread = !isOwnMessage && isInactiveConversation;
+            const shouldIncrementUnread = !isOwnMessage && isInactiveConversation && !isNewConversation;
 
             chatStore.addMessage(message.conversationId, message, shouldIncrementUnread);
 

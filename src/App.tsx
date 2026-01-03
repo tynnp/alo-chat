@@ -27,11 +27,12 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 
         // Tải danh sách hội thoại
         const convResponse = await conversationsApi.getAll(token);
-        const conversations = convResponse.conversations.map((conv: ConversationResponse & { last_message?: { _id: string; content: string; sender_id: string; type: string; created_at: string } }) => ({
+        const conversations = convResponse.conversations.map((conv: ConversationResponse & { last_message?: { _id: string; content: string; sender_id: string; type: string; created_at: string }; is_pinned?: boolean }) => ({
           id: conv._id,
           type: conv.type,
           name: conv.name,
           members: conv.members.map(m => m.user_id),
+          isPinned: conv.is_pinned || false,
           unreadCount: conv.unread_count,
           createdAt: new Date(conv.created_at),
           lastMessage: conv.last_message ? {

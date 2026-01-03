@@ -62,6 +62,15 @@ export const conversationsApi = {
 
     getMessages: (token: string, conversationId: string) =>
         apiRequest<{ messages: MessageResponse[] }>(`/api/conversations/${conversationId}/messages`, { token }),
+
+    togglePin: (token: string, conversationId: string) =>
+        apiRequest<{ is_pinned: boolean; message: string }>(`/api/conversations/${conversationId}/pin`, { method: 'PUT', token }),
+
+    clearMessages: (token: string, conversationId: string) =>
+        apiRequest<{ deleted_count: number; message: string }>(`/api/conversations/${conversationId}/messages`, { method: 'DELETE', token }),
+
+    delete: (token: string, conversationId: string) =>
+        apiRequest<{ message: string }>(`/api/conversations/${conversationId}`, { method: 'DELETE', token }),
 };
 
 // API Người dùng

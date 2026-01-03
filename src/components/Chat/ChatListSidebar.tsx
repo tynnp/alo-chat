@@ -1,9 +1,10 @@
-import { useRef, useEffect } from 'react';
-import { Search, PlusCircle, Cloud } from 'lucide-react';
-import { useChatStore } from '../../stores/chatStore';
+import { useRef, useEffect, useState } from 'react';
+import { Search, PlusCircle, Cloud, Pin, Trash2 } from 'lucide-react';
+import { useChatStore, type Conversation } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useFriendStore } from '../../stores/friendStore';
-import { API_BASE_URL } from '../../services/api';
+import { API_BASE_URL, conversationsApi } from '../../services/api';
+import ContextMenu from './ContextMenu';
 
 interface ChatListSidebarProps {
     onSelectConversation: (id: string) => void;
@@ -11,11 +12,18 @@ interface ChatListSidebarProps {
     setWidth: (width: number) => void;
 }
 
+interface ContextMenuState {
+    x: number;
+    y: number;
+    conversation: Conversation | null;
+}
+
 export default function ChatListSidebar({ onSelectConversation, width, setWidth }: ChatListSidebarProps) {
     const isResizing = useRef(false);
-    const { conversations, activeConversationId } = useChatStore();
-    const { user } = useAuthStore();
+    const { conversations, activeConversationId, togglePinConversation, clearConversationMessages, removeConversation } = useChatStore();
+    const { user, token } = useAuthStore();
     const { friends } = useFriendStore();
+    const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
     // Xử lý thay đổi kích thước
     useEffect(() => {
@@ -135,6 +143,10 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                                 <div
                                     key={conv.id}
                                     onClick={() => onSelectConversation(conv.id)}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        setContextMenu({ x: e.clientX, y: e.clientY, conversation: conv });
+                                    }}
                                     className={`group p-3 flex items-center gap-3 rounded-xl cursor-pointer transition-colors
                                         ${isActive ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
                                 >
@@ -152,9 +164,12 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
-                                            <h4 className={`font-semibold truncate ${isActive ? 'text-blue-700' : 'text-gray-800'}`}>
-                                                {display.name}
-                                            </h4>
+                                            <div className="flex items-center gap-1.5">
+                                                {conv.isPinned && <Pin className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+                                                <h4 className={`font-semibold truncate ${isActive ? 'text-blue-700' : 'text-gray-800'}`}>
+                                                    {display.name}
+                                                </h4>
+                                            </div>
                                             <span className="text-xs text-gray-400 whitespace-nowrap">
                                                 {formatTime(conv.lastMessage?.createdAt || conv.createdAt)}
                                             </span>
@@ -186,6 +201,65 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                     document.body.style.userSelect = 'none';
                 }}
             />
+
+            {/* Context Menu */}
+            {contextMenu && contextMenu.conversation && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    items={[
+                        {
+                            label: contextMenu.conversation.isPinned ? 'Bỏ ghim' : 'Ghim cuộc trò chuyện',
+                            icon: <Pin className="w-4 h-4" />,
+                            onClick: async () => {
+                                if (!token || !contextMenu.conversation) return;
+                                try {
+                                    await conversationsApi.togglePin(token, contextMenu.conversation.id);
+                                    togglePinConversation(contextMenu.conversation.id);
+                                } catch (error) {
+                                    console.error('Failed to toggle pin:', error);
+                                }
+                            }
+                        },
+                        {
+                            label: 'Xóa tin nhắn',
+                            icon: <Trash2 className="w-4 h-4" />,
+                            danger: true,
+                            divider: true,
+                            onClick: async () => {
+                                if (!token || !contextMenu.conversation) return;
+                                const conv = contextMenu.conversation;
+                                const confirmMsg = conv.type === 'self'
+                                    ? 'Bạn có chắc muốn xóa tất cả tin nhắn trong Cloud?'
+                                    : 'Bạn có chắc muốn xóa tất cả tin nhắn?';
+                                if (!confirm(confirmMsg)) return;
+                                try {
+                                    await conversationsApi.clearMessages(token, conv.id);
+                                    clearConversationMessages(conv.id);
+                                } catch (error) {
+                                    console.error('Failed to clear messages:', error);
+                                }
+                            }
+                        },
+                        ...(contextMenu.conversation.type !== 'self' ? [{
+                            label: 'Xóa cuộc trò chuyện',
+                            icon: <Trash2 className="w-4 h-4" />,
+                            danger: true,
+                            onClick: async () => {
+                                if (!token || !contextMenu.conversation) return;
+                                if (!confirm('Bạn có chắc muốn xóa cuộc trò chuyện này?')) return;
+                                try {
+                                    await conversationsApi.delete(token, contextMenu.conversation.id);
+                                    removeConversation(contextMenu.conversation.id);
+                                } catch (error) {
+                                    console.error('Failed to delete conversation:', error);
+                                }
+                            }
+                        }] : [])
+                    ]}
+                />
+            )}
         </div>
     );
 }

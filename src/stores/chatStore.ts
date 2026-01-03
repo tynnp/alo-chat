@@ -18,6 +18,7 @@ export interface Conversation {
     type: 'private' | 'group' | 'self';
     name?: string;
     members: string[];
+    isPinned?: boolean;
     lastMessage?: Message;
     unreadCount: number;
     createdAt: Date;
@@ -31,6 +32,9 @@ interface ChatState {
     setConversations: (conversations: Conversation[]) => void;
     addConversation: (conversation: Conversation) => void;
     setActiveConversation: (id: string | null) => void;
+    togglePinConversation: (id: string) => void;
+    clearConversationMessages: (id: string) => void;
+    removeConversation: (id: string) => void;
 
     setMessages: (conversationId: string, messages: Message[]) => void;
     addMessage: (conversationId: string, message: Message, shouldIncrementUnread?: boolean) => void;
@@ -56,6 +60,35 @@ export const useChatStore = create<ChatState>((set) => ({
         conversations: state.conversations.map(c =>
             c.id === id ? { ...c, unreadCount: 0 } : c
         )
+    })),
+
+    togglePinConversation: (id) => set((state) => {
+        const updated = state.conversations.map(c =>
+            c.id === id ? { ...c, isPinned: !c.isPinned } : c
+        );
+
+        // Sắp xếp lại: ghim lên đầu
+        updated.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return 0;
+        });
+        return { conversations: updated };
+    }),
+
+    clearConversationMessages: (id) => set((state) => ({
+        messages: { ...state.messages, [id]: [] },
+        conversations: state.conversations.map(c =>
+            c.id === id ? { ...c, lastMessage: undefined } : c
+        )
+    })),
+
+    removeConversation: (id) => set((state) => ({
+        conversations: state.conversations.filter(c => c.id !== id),
+        messages: Object.fromEntries(
+            Object.entries(state.messages).filter(([key]) => key !== id)
+        ),
+        activeConversationId: state.activeConversationId === id ? null : state.activeConversationId
     })),
 
     setMessages: (conversationId, messages) =>
