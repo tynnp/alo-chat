@@ -1,10 +1,10 @@
 [package]
-name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+name = "alo-chat"
+version = "0.1.0-beta"
+description = "Ứng dụng nhắn tin công việc - Alo Chat"
+authors = ["Nguyễn Ngọc Phú Tỷ"]
+license = "MIT"
+repository = "https://github.com/tynnp/alo-chat"
 edition = "2021"
 rust-version = "1.77.2"
 
