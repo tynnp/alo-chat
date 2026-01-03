@@ -1,0 +1,20 @@
+[
+    {
+        "username": "admin",
+        "display_name": "Quản trị viên",
+        "password": "admin123",
+        "is_admin": true
+    },
+    {
+        "username": "user1",
+        "display_name": "Người dùng 1",
+        "password": "user123",
+        "is_admin": false
+    },
+    {
+        "username": "user2",
+        "display_name": "Người dùng 2",
+        "password": "user123",
+        "is_admin": false
+    }
+]

@@ -68,3 +68,6 @@ uploads/
 
 # document (private)
 docs/
+
+# Security
+server/default_users.json

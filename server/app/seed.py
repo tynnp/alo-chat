@@ -1,32 +1,25 @@
+import os
+import json
 from datetime import datetime, timezone
 from app.services.user_helper import create_self_conversation
 
-# Tài khoản mặc định
-DEFAULT_USERS = [
-    {
-        "username": "admin",
-        "display_name": "Quản trị viên",
-        "password": "admin123",
-        "is_admin": True,
-    },
-    {
-        "username": "user1",
-        "display_name": "Người dùng 1",
-        "password": "user123",
-        "is_admin": False,
-    },
-    {
-        "username": "user2", 
-        "display_name": "Người dùng 2",
-        "password": "user123",
-        "is_admin": False,
-    },
-]
-
 async def seed_users(db, get_password_hash):
+    json_path = os.path.join(os.getcwd(), "default_users.json")
+    
+    if not os.path.exists(json_path):
+        print(f"Dữ liệu mẫu: Không tìm thấy {json_path}. Bỏ qua bước tạo tài khoản mặc định.")
+        return []
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            default_users = json.load(f)
+    except Exception as e:
+        print(f"Lỗi dữ liệu mẫu: Không thể tải file {json_path}: {e}")
+        return []
+
     created_users = []
     
-    for user_data in DEFAULT_USERS:
+    for user_data in default_users:
         # Kiểm tra user đã tồn tại chưa
         existing = await db.users.find_one({"username": user_data["username"]})
         if existing:
