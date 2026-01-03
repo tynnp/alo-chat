@@ -44,7 +44,7 @@ export default function Login() {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-blue-500 mb-2">ALO</h1>
-                    <p className="text-gray-500">Kết nối mọi lúc, sẵn sàng cho công việc</p>
+                    <p className="text-gray-500">Kết nối mọi lúc, sẵn sàng mọi việc</p>
                 </div>
 
                 {/* Login form */}
