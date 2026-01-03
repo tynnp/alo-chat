@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { authApi } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
@@ -135,11 +135,12 @@ export default function Login() {
                 </form>
 
                 {/* Register link */}
-                <div className="text-center mt-6 pt-6 border-t border-gray-200 text-sm text-gray-600">
+                {/* <div className="text-center mt-6 pt-6 border-t border-gray-200 text-sm text-gray-600">
                     <span>Chưa có tài khoản?</span>
                     <Link to="/register" className="ml-1 text-blue-500 font-semibold hover:text-blue-600 hover:underline transition-colors">
-                        Đăng ký ngay
-                    </Link>
+                        Đăng ký ngay */}
+                <div className="text-center mt-6 pt-6 border-t border-gray-200 text-sm text-amber-600 font-medium">
+                    Hệ thống chưa cho phép đăng ký tài khoản mới
                 </div>
             </div>
         </div>
