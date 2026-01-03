@@ -104,7 +104,35 @@ export const friendsApi = {
         apiRequest<{ message: string }>(`/api/friends/request/${requestId}`, { method: 'DELETE', token }),
 };
 
-// Các kiểu dữ liệu phản hồi (Response)
+// API Files
+export interface FileUploadResponse {
+    file_url: string;
+    file_name: string;
+    file_size: number;
+    file_type: 'image' | 'file';
+}
+
+export const filesApi = {
+    upload: async (token: string, file: File): Promise<FileUploadResponse> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/api/files/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+            throw new Error(error.detail || 'Upload failed');
+        }
+
+        return response.json();
+    },
+};
 export interface UserResponse {
     id: string;
     username: string;
@@ -163,6 +191,8 @@ export interface MessageResponse {
     sender_id: string;
     content: string;
     type: 'text' | 'file' | 'image' | 'system';
+    file_url?: string;
+    file_name?: string;
     status: Array<{
         user_id: string;
         status: 'sent' | 'delivered' | 'read';

@@ -9,7 +9,7 @@ import { MessagesSquare } from 'lucide-react';
 import { useChatStore, type Message } from '../stores/chatStore';
 import { useAuthStore } from '../stores/authStore';
 import { useFriendStore } from '../stores/friendStore';
-import { conversationsApi, type MessageResponse } from '../services/api';
+import { conversationsApi, filesApi, type MessageResponse } from '../services/api';
 import { socketService } from '../services/socket';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -99,6 +99,8 @@ export default function Chat() {
                     senderId: msg.sender_id,
                     content: msg.content,
                     type: msg.type,
+                    fileUrl: msg.file_url,
+                    fileName: msg.file_name,
                     status: msg.status[0]?.status || 'sent',
                     createdAt: new Date(msg.created_at),
                 }));
@@ -146,7 +148,7 @@ export default function Chat() {
         }
     };
 
-    const handleSendMessage = async (content: string) => {
+    const handleSendMessage = async (content: string, type: 'text' | 'file' | 'image' = 'text', fileUrl?: string, fileName?: string) => {
         if (!activeConversationId || !user) return;
 
         const clientId = Date.now().toString() + Math.random().toString(36).substring(7);
@@ -157,7 +159,9 @@ export default function Chat() {
             conversationId: activeConversationId,
             senderId: user.id,
             content: content,
-            type: 'text',
+            type: type,
+            fileUrl: fileUrl,
+            fileName: fileName,
             status: 'sending',
             createdAt: new Date(),
         };
@@ -165,9 +169,20 @@ export default function Chat() {
         addMessage(activeConversationId, optimisticMessage);
 
         try {
-            await socketService.sendMessage(activeConversationId, content, 'text', clientId);
+            await socketService.sendMessage(activeConversationId, content, type, clientId, fileUrl, fileName);
         } catch (error) {
             console.error('Failed to send message:', error);
+        }
+    };
+
+    const handleFileUpload = async (file: File) => {
+        if (!token) return null;
+        try {
+            const result = await filesApi.upload(token, file);
+            return result;
+        } catch (error) {
+            console.error('File upload failed:', error);
+            return null;
         }
     };
 
@@ -255,6 +270,8 @@ export default function Chat() {
                                     senderName: sender?.displayName,
                                     timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                                     type: msg.type as 'text' | 'image' | 'file',
+                                    fileUrl: msg.fileUrl,
+                                    fileName: msg.fileName,
                                     status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent',
                                 };
                             })}
@@ -262,7 +279,7 @@ export default function Chat() {
                         />
 
                         {/* Input Area */}
-                        <ChatInput onSendMessage={handleSendMessage} />
+                        <ChatInput onSendMessage={handleSendMessage} onFileUpload={handleFileUpload} />
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

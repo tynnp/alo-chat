@@ -133,8 +133,8 @@ export const socketService = {
         }
     },
 
-    sendMessage: async (conversationId: string, content: string, type: 'text' | 'file' = 'text', clientId?: string) => {
-        await socketService.send('message:send', { conversationId, content, type, clientId });
+    sendMessage: async (conversationId: string, content: string, type: 'text' | 'file' | 'image' = 'text', clientId?: string, fileUrl?: string, fileName?: string) => {
+        await socketService.send('message:send', { conversationId, content, type, clientId, fileUrl, fileName });
     },
 
     sendTyping: async (conversationId: string) => {
@@ -163,6 +163,8 @@ interface BackendMessage {
     sender_avatar?: string;
     content: string;
     type: 'text' | 'file' | 'image' | 'system';
+    file_url?: string;
+    file_name?: string;
     status: Array<{ user_id: string; status: string; at: string }>;
     created_at: string;
 }
@@ -205,6 +207,8 @@ function handleMessage(data: { event: string; payload: unknown }) {
                 senderId: backendMsg.sender_id,
                 content: backendMsg.content,
                 type: backendMsg.type,
+                fileUrl: backendMsg.file_url,
+                fileName: backendMsg.file_name,
                 status: backendMsg.status[0]?.status as Message['status'] || 'sent',
                 createdAt: new Date(backendMsg.created_at),
             };
