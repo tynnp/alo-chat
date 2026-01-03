@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 interface ApiOptions {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -34,13 +34,13 @@ export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}):
 // API Xác thực
 export const authApi = {
     login: (username: string, password: string) =>
-        apiRequest<{ access_token: string; user: { id: string; username: string; display_name: string } }>(
+        apiRequest<{ access_token: string; user: { id: string; username: string; display_name: string; avatar_url?: string } }>(
             '/api/auth/login',
             { method: 'POST', body: { username, password } }
         ),
 
     register: (username: string, password: string, displayName: string) =>
-        apiRequest<{ access_token: string; user: { id: string; username: string; display_name: string } }>(
+        apiRequest<{ access_token: string; user: { id: string; username: string; display_name: string; avatar_url?: string } }>(
             '/api/auth/register',
             { method: 'POST', body: { username, password, display_name: displayName } }
         ),

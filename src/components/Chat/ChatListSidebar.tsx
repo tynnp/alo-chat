@@ -3,6 +3,7 @@ import { Search, PlusCircle, Cloud } from 'lucide-react';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useFriendStore } from '../../stores/friendStore';
+import { API_BASE_URL } from '../../services/api';
 
 interface ChatListSidebarProps {
     onSelectConversation: (id: string) => void;
@@ -138,10 +139,14 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                                         ${isActive ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
                                 >
                                     <div className="relative">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold overflow-hidden border border-gray-100
                                             ${display.type === 'self' ? 'bg-indigo-100 text-indigo-600' :
                                                 display.type === 'group' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                                            {display.type === 'self' ? <Cloud className="w-6 h-6" /> : display.name.charAt(0).toUpperCase()}
+                                            {display.avatar ? (
+                                                <img src={display.avatar.startsWith('http') ? display.avatar : `${API_BASE_URL}${display.avatar}`} alt={display.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                display.type === 'self' ? <Cloud className="w-6 h-6" /> : display.name.charAt(0).toUpperCase()
+                                            )}
                                         </div>
                                     </div>
 

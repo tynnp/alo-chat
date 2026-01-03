@@ -48,6 +48,7 @@ export default function Register() {
                     id: response.user.id,
                     username: response.user.username,
                     displayName: response.user.display_name,
+                    avatarUrl: response.user.avatar_url,
                 },
                 response.access_token
             );

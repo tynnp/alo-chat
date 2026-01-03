@@ -161,6 +161,7 @@ export default function Chat() {
             return {
                 name: activeConversation.name || 'Nhóm chat',
                 type: 'group' as const,
+                avatarUrl: undefined,
                 memberCount: activeConversation.members.length,
             };
         }
@@ -172,6 +173,7 @@ export default function Chat() {
         return {
             name: friend?.displayName || activeConversation.name || 'Người dùng',
             type: 'private' as const,
+            avatarUrl: friend?.avatarUrl,
             status: friend?.status || 'offline',
             lastOnline: formatRelativeTime(friend?.lastOnline),
         };
@@ -207,6 +209,7 @@ export default function Chat() {
                         <ChatHeader conversation={{
                             id: activeConversation.id,
                             name: displayInfo.name,
+                            avatar: displayInfo.avatarUrl,
                             type: displayInfo.type,
                             status: 'status' in displayInfo ? displayInfo.status : undefined,
                             lastOnline: 'lastOnline' in displayInfo ? displayInfo.lastOnline : undefined,
@@ -215,14 +218,20 @@ export default function Chat() {
 
                         {/* Message List */}
                         <MessageList
-                            messages={currentMessages.map(msg => ({
-                                id: msg.id,
-                                content: msg.content,
-                                senderId: msg.senderId,
-                                timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                                type: msg.type as 'text' | 'image' | 'file',
-                                status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent',
-                            }))}
+                            messages={currentMessages.map(msg => {
+                                const isOwn = msg.senderId === user?.id;
+                                const sender = isOwn ? user : friends.find(f => f.id === msg.senderId);
+                                return {
+                                    id: msg.id,
+                                    content: msg.content,
+                                    senderId: msg.senderId,
+                                    senderAvatar: sender?.avatarUrl,
+                                    senderName: sender?.displayName,
+                                    timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                                    type: msg.type as 'text' | 'image' | 'file',
+                                    status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent',
+                                };
+                            })}
                             currentUserId={user?.id || ''}
                         />
 

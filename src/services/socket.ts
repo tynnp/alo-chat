@@ -2,8 +2,9 @@ import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore, type Message } from '../stores/chatStore';
 import { useFriendStore, type Friend, type FriendRequest } from '../stores/friendStore';
+import { API_BASE_URL } from './api';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || API_BASE_URL.replace('http', 'ws').replace(/\/$/, '') + '/ws';
 
 let ws: WebSocket | null = null;
 let currentToken: string | null = null;

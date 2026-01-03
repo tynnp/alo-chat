@@ -63,5 +63,8 @@ coverage/
 tmp/
 temp/
 
+# uploads
+uploads/
+
 # document (private)
 docs/

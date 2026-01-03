@@ -2,6 +2,7 @@ import { MessagesSquare, Users, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
 import { socketService } from '../../services/socket';
+import AvatarUpload from './AvatarUpload';
 
 interface NavigationSidebarProps {
     activeTab: 'chat' | 'contacts';
@@ -17,9 +18,7 @@ export default function NavigationSidebar({ activeTab, setActiveTab }: Navigatio
         <div className="w-16 h-full bg-blue-50 border-r border-blue-100 flex flex-col items-center py-2 justify-between">
             <div className="flex flex-col items-center gap-1 w-full">
                 {/* User Avatar */}
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold mb-1 border border-blue-200">
-                    {user?.displayName?.charAt(0).toUpperCase() || 'U'}
-                </div>
+                <AvatarUpload currentAvatar={user?.avatarUrl} />
 
                 {/* Tabs */}
                 <button

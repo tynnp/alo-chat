@@ -1,10 +1,13 @@
 import { useRef, useEffect } from 'react';
 import { Check, CheckCheck } from 'lucide-react';
+import { API_BASE_URL } from '../../services/api';
 
 interface Message {
     id: string;
     content: string;
     senderId: string;
+    senderAvatar?: string;
+    senderName?: string;
     timestamp: string;
     type: 'text' | 'image' | 'file';
     status?: 'sending' | 'sent' | 'received' | 'read';
@@ -37,9 +40,13 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
 
                 // Helper render avatar
                 const Avatar = () => (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 overflow-hidden border border-gray-100
                         ${isOwn ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {isOwn ? 'T' : 'N'}
+                        {msg.senderAvatar ? (
+                            <img src={msg.senderAvatar.startsWith('http') ? msg.senderAvatar : `${API_BASE_URL}${msg.senderAvatar}`} alt={msg.senderName} className="w-full h-full object-cover" />
+                        ) : (
+                            <span>{(msg.senderName || (isOwn ? 'T' : 'N')).charAt(0).toUpperCase()}</span>
+                        )}
                     </div>
                 );
 

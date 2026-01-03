@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Search, UserPlus, X, Loader2 } from 'lucide-react';
 import { useFriendStore } from '../../stores/friendStore';
 import { useAuthStore } from '../../stores/authStore';
-import { friendsApi, usersApi, type UserResponse } from '../../services/api';
+import { friendsApi, usersApi, type UserResponse, API_BASE_URL } from '../../services/api';
 
 interface ContactListSidebarProps {
     onSelectContact: (id: string) => void;
@@ -187,8 +187,12 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
                                 {searchResults.map(user => (
                                     <div key={user.id} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center justify-between shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold">
-                                                {user.display_name.charAt(0)}
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold overflow-hidden border border-gray-100">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url.startsWith('http') ? user.avatar_url : `${API_BASE_URL}${user.avatar_url}`} alt={user.display_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    user.display_name.charAt(0)
+                                                )}
                                             </div>
                                             <div>
                                                 <h4 className="font-semibold text-gray-800 text-sm">{user.display_name}</h4>
@@ -223,8 +227,12 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
                             {friendRequests.map(req => (
                                 <div key={req.id} className="p-3 bg-white border border-gray-100 rounded-xl mb-2 flex flex-col gap-2 shadow-sm">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold">
-                                            {req.fromUserName.charAt(0)}
+                                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold overflow-hidden border border-gray-100">
+                                            {req.fromUserAvatar ? (
+                                                <img src={req.fromUserAvatar.startsWith('http') ? req.fromUserAvatar : `${API_BASE_URL}${req.fromUserAvatar}`} alt={req.fromUserName} className="w-full h-full object-cover" />
+                                            ) : (
+                                                req.fromUserName.charAt(0)
+                                            )}
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-gray-800 text-sm">{req.fromUserName}</h4>
@@ -261,8 +269,12 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
                         <div className="p-2">
                             {sentRequests.map(req => (
                                 <div key={req.id} className="p-3 flex items-center gap-3 text-gray-500">
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-semibold">
-                                        {req.toUserName.charAt(0)}
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-semibold overflow-hidden border border-gray-100">
+                                        {req.toUserAvatar ? (
+                                            <img src={req.toUserAvatar.startsWith('http') ? req.toUserAvatar : `${API_BASE_URL}${req.toUserAvatar}`} alt={req.toUserName} className="w-full h-full object-cover" />
+                                        ) : (
+                                            req.toUserName.charAt(0)
+                                        )}
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="font-medium text-gray-600 text-sm">{req.toUserName}</h4>
@@ -293,8 +305,12 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
                                 className="group p-3 flex items-center gap-3 rounded-xl hover:bg-blue-50 cursor-pointer transition-colors"
                             >
                                 <div className="relative">
-                                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-semibold">
-                                        {friend.displayName.charAt(0).toUpperCase()}
+                                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-semibold overflow-hidden border border-gray-100">
+                                        {friend.avatarUrl ? (
+                                            <img src={friend.avatarUrl.startsWith('http') ? friend.avatarUrl : `${API_BASE_URL}${friend.avatarUrl}`} alt={friend.displayName} className="w-full h-full object-cover" />
+                                        ) : (
+                                            friend.displayName.charAt(0).toUpperCase()
+                                        )}
                                     </div>
                                     <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white
                                         ${friend.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}>

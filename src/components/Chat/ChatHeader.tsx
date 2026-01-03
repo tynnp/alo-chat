@@ -1,4 +1,5 @@
 import { Phone, Video, Info, Cloud, Users } from 'lucide-react';
+import { API_BASE_URL } from '../../services/api';
 
 interface ChatHeaderProps {
     conversation: {
@@ -18,12 +19,16 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
             {/* User Info */}
             <div className="flex items-center gap-4">
                 <div className="relative">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold overflow-hidden border border-gray-100
                         ${conversation.type === 'self' ? 'bg-indigo-100 text-indigo-600' :
                             conversation.type === 'group' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {conversation.type === 'self' ? <Cloud className="w-6 h-6" /> :
-                            conversation.type === 'group' ? <Users className="w-5 h-5" /> :
-                                conversation.name.charAt(0).toUpperCase()}
+                        {conversation.avatar ? (
+                            <img src={conversation.avatar.startsWith('http') ? conversation.avatar : `${API_BASE_URL}${conversation.avatar}`} alt={conversation.name} className="w-full h-full object-cover" />
+                        ) : (
+                            conversation.type === 'self' ? <Cloud className="w-6 h-6" /> :
+                                conversation.type === 'group' ? <Users className="w-5 h-5" /> :
+                                    conversation.name.charAt(0).toUpperCase()
+                        )}
                     </div>
 
                     {/* Online Status Dot */}
