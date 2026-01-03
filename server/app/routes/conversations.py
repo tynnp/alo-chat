@@ -32,6 +32,17 @@ async def create_conversation(data: ConversationCreate, current_user: dict = Dep
         
         other_user_id = data.member_ids[0]
         
+        # Kiểm tra 2 người phải là bạn bè
+        friendship = await db.friendships.find_one({
+            "status": "accepted",
+            "$or": [
+                {"from_user_id": user_id, "to_user_id": other_user_id},
+                {"from_user_id": other_user_id, "to_user_id": user_id}
+            ]
+        })
+        if not friendship:
+            raise HTTPException(status_code=403, detail="Bạn cần kết bạn trước khi nhắn tin")
+        
         # Kiểm tra cuộc hội thoại riêng đã tồn tại chưa
         existing = await db.conversations.find_one({
             "type": "private",

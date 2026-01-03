@@ -7,7 +7,7 @@ import json
 
 from app.config import get_settings
 from app.database import connect_to_mongo, close_mongo_connection, get_database
-from app.routes import auth_router, conversations_router, users_router
+from app.routes import auth_router, conversations_router, users_router, friends_router
 from app.websocket import manager
 from app.services import decode_access_token
 
@@ -38,6 +38,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api")
 app.include_router(conversations_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(friends_router, prefix="/api")
 
 @app.get("/")
 async def root():
