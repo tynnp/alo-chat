@@ -19,6 +19,10 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
     for conv in conversations:
         conv["_id"] = str(conv["_id"])
         
+        # Kiểm tra trạng thái ghim
+        pinned_by = conv.get("pinned_by", [])
+        conv["is_pinned"] = user_id in pinned_by
+        
         # Lấy tin nhắn cuối cùng
         last_message = await db.messages.find_one(
             {"conversation_id": str(conv["_id"])},
@@ -42,6 +46,9 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
             "status": {"$not": {"$elemMatch": {"user_id": user_id, "status": "read"}}}
         })
         conv["unread_count"] = unread_count
+    
+    # Sắp xếp: ghim lên đầu, sau đó theo thời gian
+    conversations.sort(key=lambda c: (not c.get("is_pinned", False), c.get("last_message_at") is None))
     
     return {"conversations": conversations}
 
@@ -138,3 +145,75 @@ async def add_member(conversation_id: str, member_id: str, current_user: dict = 
     )
     
     return {"message": "Đã thêm thành viên"}
+
+@router.put("/{conversation_id}/pin")
+async def toggle_pin_conversation(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_database()
+    user_id = current_user["_id"]
+    
+    conversation = await db.conversations.find_one({
+        "_id": ObjectId(conversation_id),
+        "members.user_id": user_id
+    })
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cuộc hội thoại")
+    
+    # Toggle trạng thái ghim cho user này
+    pinned_by = conversation.get("pinned_by", [])
+    if user_id in pinned_by:
+        pinned_by.remove(user_id)
+        is_pinned = False
+    else:
+        pinned_by.append(user_id)
+        is_pinned = True
+    
+    await db.conversations.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {"$set": {"pinned_by": pinned_by}}
+    )
+    
+    return {"is_pinned": is_pinned, "message": "Đã ghim" if is_pinned else "Đã bỏ ghim"}
+
+@router.delete("/{conversation_id}/messages")
+async def clear_conversation_messages(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_database()
+    user_id = current_user["_id"]
+    
+    conversation = await db.conversations.find_one({
+        "_id": ObjectId(conversation_id),
+        "members.user_id": user_id
+    })
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cuộc hội thoại")
+    
+    # Xóa tất cả tin nhắn trong cuộc hội thoại
+    result = await db.messages.delete_many({"conversation_id": conversation_id})
+    
+    # Reset last_message_at
+    await db.conversations.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {"$set": {"last_message_at": None}}
+    )
+    
+    return {"deleted_count": result.deleted_count, "message": "Đã xóa tất cả tin nhắn"}
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(conversation_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_database()
+    user_id = current_user["_id"]
+    
+    conversation = await db.conversations.find_one({
+        "_id": ObjectId(conversation_id),
+        "members.user_id": user_id
+    })
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cuộc hội thoại")
+    
+    # Không cho xóa cuộc hội thoại "self" (Cloud của tôi)
+    if conversation.get("type") == "self":
+        raise HTTPException(status_code=400, detail="Không thể xóa Cloud của tôi. Hãy dùng chức năng xóa tin nhắn.")
+    
+    await db.messages.delete_many({"conversation_id": conversation_id})
+    await db.conversations.delete_one({"_id": ObjectId(conversation_id)})
+    
+    return {"message": "Đã xóa cuộc hội thoại"}
