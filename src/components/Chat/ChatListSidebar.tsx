@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Search, PlusCircle, Cloud, Pin, Trash2 } from 'lucide-react';
+import { Search, PlusCircle, CloudSync, Pin, Trash2 } from 'lucide-react';
 import { useChatStore, type Conversation } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useFriendStore } from '../../stores/friendStore';
@@ -173,7 +173,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
                                             {display.avatar ? (
                                                 <img src={display.avatar.startsWith('http') ? display.avatar : `${API_BASE_URL}${display.avatar}`} alt={display.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                display.type === 'self' ? <Cloud className="w-6 h-6" /> : display.name.charAt(0).toUpperCase()
+                                                display.type === 'self' ? <CloudSync className="w-6 h-6" /> : display.name.charAt(0).toUpperCase()
                                             )}
                                         </div>
                                     </div>

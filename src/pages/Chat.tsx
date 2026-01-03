@@ -276,6 +276,7 @@ export default function Chat() {
                                 };
                             })}
                             currentUserId={user?.id || ''}
+                            conversationType={activeConversation?.type}
                         />
 
                         {/* Input Area */}

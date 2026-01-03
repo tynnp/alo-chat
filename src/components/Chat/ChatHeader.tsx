@@ -1,4 +1,4 @@
-import { Phone, Video, Info, Cloud, Users } from 'lucide-react';
+import { Phone, Video, Info, CloudSync, Users } from 'lucide-react';
 import { API_BASE_URL } from '../../services/api';
 
 interface ChatHeaderProps {
@@ -25,7 +25,7 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
                         {conversation.avatar ? (
                             <img src={conversation.avatar.startsWith('http') ? conversation.avatar : `${API_BASE_URL}${conversation.avatar}`} alt={conversation.name} className="w-full h-full object-cover" />
                         ) : (
-                            conversation.type === 'self' ? <Cloud className="w-6 h-6" /> :
+                            conversation.type === 'self' ? <CloudSync className="w-6 h-6" /> :
                                 conversation.type === 'group' ? <Users className="w-5 h-5" /> :
                                     conversation.name.charAt(0).toUpperCase()
                         )}

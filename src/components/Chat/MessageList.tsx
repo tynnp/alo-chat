@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Check, CheckCheck, FileIcon, Download } from 'lucide-react';
+import { Check, CheckCheck, FileIcon, Download, BriefcaseBusiness, CloudSync } from 'lucide-react';
 import { API_BASE_URL } from '../../services/api';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
@@ -21,9 +21,14 @@ interface Message {
 interface MessageListProps {
     messages: Message[];
     currentUserId: string;
+    conversationType?: 'private' | 'group' | 'self';
 }
 
-export default function MessageList({ messages, currentUserId }: MessageListProps) {
+export default function MessageList({
+    messages,
+    currentUserId,
+    conversationType
+}: MessageListProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [viewingImage, setViewingImage] = useState<{ url: string; fileName: string } | null>(null);
 
@@ -32,9 +37,26 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
     }, [messages]);
 
     if (messages.length === 0) {
+        if (conversationType === 'self') {
+            return (
+                <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 p-8">
+                    <CloudSync className="w-12 h-12 text-gray-300 mb-3" />
+                    <p className="text-gray-400 text-sm">Chưa có tin nhắn</p>
+                </div>
+            );
+        }
+
         return (
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
-                <p className="text-gray-400 text-sm">Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!</p>
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 p-8">
+                <div className="text-center max-w-md">
+                    <BriefcaseBusiness className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Chào mừng 2 bạn đã kết nối với nhau!
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                        Hãy bắt đầu trao đổi công việc nhé!
+                    </p>
+                </div>
             </div>
         );
     }
