@@ -223,7 +223,7 @@ export default function Chat() {
     const displayInfo = getConversationDisplayInfo();
 
     return (
-        <div className="flex h-screen bg-gray-100 overflow-hidden">
+        <div className="flex h-full bg-gray-100 overflow-hidden">
             {/* 1. Navigation Sidebar (Icons) */}
             <NavigationSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 

@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
 import NotificationPopup from './pages/NotificationPopup';
+import TitleBar from './components/Layout/TitleBar';
 import './App.css';
 
 // Component để khởi tạo app khi đã đăng nhập
@@ -119,23 +120,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <AppInitializer>
-                <Chat />
-              </AppInitializer>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/notification-pop" element={<NotificationPopup />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <div className="flex flex-col h-screen overflow-hidden relative">
+        <TitleBar />
+        <div className="flex-1 pt-8 overflow-hidden">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <AppInitializer>
+                    <Chat />
+                  </AppInitializer>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/notification-pop" element={<NotificationPopup />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </div>
+      </div>
     </BrowserRouter>
   );
 }

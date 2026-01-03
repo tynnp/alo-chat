@@ -43,7 +43,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center p-6 bg-blue-50">
+        <div className="min-h-full flex flex-col items-center justify-center p-4 bg-gray-100">
             {/* Login card */}
             <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                 {/* Header */}
