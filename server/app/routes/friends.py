@@ -84,7 +84,7 @@ async def get_friend_requests(current_user: dict = Depends(get_current_user)):
                 "to_user_name": current_user.get("display_name", ""),
                 "to_user_avatar": current_user.get("avatar_url"),
                 "status": req["status"],
-                "created_at": req["created_at"]
+                "created_at": req["created_at"].isoformat() if req.get("created_at") else None
             })
     
     return {"requests": result}
@@ -110,7 +110,7 @@ async def get_sent_requests(current_user: dict = Depends(get_current_user)):
                 "to_user_name": to_user["display_name"],
                 "to_user_avatar": to_user.get("avatar_url"),
                 "status": req["status"],
-                "created_at": req["created_at"]
+                "created_at": req["created_at"].isoformat() if req.get("created_at") else None
             })
     
     return {"sent_requests": result}

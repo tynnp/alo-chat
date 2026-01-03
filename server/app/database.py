@@ -8,7 +8,7 @@ db = None
 
 async def connect_to_mongo():
     global client, db
-    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    client = AsyncIOMotorClient(settings.MONGODB_URL, tz_aware=True)
     db = client[settings.MONGODB_DB_NAME]
     
     # Tạo indexes

@@ -91,6 +91,8 @@ async def create_conversation(data: ConversationCreate, current_user: dict = Dep
     
     result = await db.conversations.insert_one(conversation)
     conversation["_id"] = str(result.inserted_id)
+    if "created_at" in conversation and conversation["created_at"]:
+        conversation["created_at"] = conversation["created_at"].isoformat()
     
     return conversation
 
@@ -113,6 +115,8 @@ async def get_messages(conversation_id: str, limit: int = 50, current_user: dict
     
     for msg in messages:
         msg["_id"] = str(msg["_id"])
+        if "created_at" in msg and msg["created_at"]:
+            msg["created_at"] = msg["created_at"].isoformat()
     
     return {"messages": list(reversed(messages))}
 
