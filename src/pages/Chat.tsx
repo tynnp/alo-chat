@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import NavigationSidebar from '../components/Chat/NavigationSidebar';
 import ChatListSidebar from '../components/Chat/ChatListSidebar';
 import ContactListSidebar from '../components/Chat/ContactListSidebar';
@@ -241,6 +241,23 @@ export default function Chat() {
 
     const displayInfo = getConversationDisplayInfo();
 
+    const mappedMessages = useMemo(() => currentMessages.map(msg => {
+        const isOwn = msg.senderId === user?.id;
+        const sender = isOwn ? user : friends.find(f => f.id === msg.senderId);
+        return {
+            id: msg.id,
+            content: msg.content,
+            senderId: msg.senderId,
+            senderAvatar: sender?.avatarUrl,
+            senderName: sender?.displayName,
+            timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            type: msg.type as 'text' | 'image' | 'file',
+            fileUrl: msg.fileUrl,
+            fileName: msg.fileName,
+            status: (msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent') as 'sending' | 'sent' | 'received' | 'read',
+        };
+    }), [currentMessages, user, friends]);
+
     return (
         <div className="flex h-full bg-gray-100 overflow-hidden">
             {/* 1. Navigation Sidebar (Icons) */}
@@ -278,22 +295,7 @@ export default function Chat() {
 
                         {/* Message List */}
                         <MessageList
-                            messages={currentMessages.map(msg => {
-                                const isOwn = msg.senderId === user?.id;
-                                const sender = isOwn ? user : friends.find(f => f.id === msg.senderId);
-                                return {
-                                    id: msg.id,
-                                    content: msg.content,
-                                    senderId: msg.senderId,
-                                    senderAvatar: sender?.avatarUrl,
-                                    senderName: sender?.displayName,
-                                    timestamp: new Date(msg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                                    type: msg.type as 'text' | 'image' | 'file',
-                                    fileUrl: msg.fileUrl,
-                                    fileName: msg.fileName,
-                                    status: msg.status === 'read' ? 'read' : msg.status === 'delivered' ? 'received' : msg.status === 'sending' ? 'sending' : 'sent',
-                                };
-                            })}
+                            messages={mappedMessages}
                             currentUserId={user?.id || ''}
                             conversationType={activeConversation?.type}
                         />

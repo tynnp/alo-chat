@@ -29,12 +29,44 @@ export default function MessageList({
     currentUserId,
     conversationType
 }: MessageListProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [viewingImage, setViewingImage] = useState<{ url: string; fileName: string } | null>(null);
+    const isAtBottomRef = useRef(true);
+    const prevMessagesCountRef = useRef(messages.length);
+
+    const checkIsAtBottom = () => {
+        const container = scrollContainerRef.current;
+        if (!container) return true;
+
+        const threshold = 100;
+        const isBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + threshold;
+        return isBottom;
+    };
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            isAtBottomRef.current = checkIsAtBottom();
+        };
+
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    useEffect(() => {
+        const lastMessage = messages[messages.length - 1];
+        const isOwnMessage = lastMessage?.senderId === currentUserId;
+        const isNewMessage = messages.length > prevMessagesCountRef.current;
+
+        if (isAtBottomRef.current || (isNewMessage && isOwnMessage)) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        prevMessagesCountRef.current = messages.length;
+    }, [messages, currentUserId]);
 
     if (messages.length === 0) {
         if (conversationType === 'self') {
@@ -137,7 +169,10 @@ export default function MessageList({
     };
 
     return (
-        <div className="flex-1 p-4 overflow-y-auto space-y-6 bg-gray-50 custom-scrollbar">
+        <div
+            ref={scrollContainerRef}
+            className="flex-1 p-4 overflow-y-auto space-y-6 bg-gray-50 custom-scrollbar"
+        >
             {messages.map((msg) => {
                 const isOwn = msg.senderId === currentUserId;
 
