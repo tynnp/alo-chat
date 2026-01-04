@@ -8,37 +8,22 @@
 
 <br/>
 
-**Ứng dụng nhắn tin thời gian thực đa nền tảng, xây dựng với React, Tauri và FastAPI**
+![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![FastAPI](https://img.shields.io/badge/FastAPI-009485?style=for-the-badge&logo=fastapi&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=websocket&logoColor=white)
+
+
+<br/>
+
+**Ứng dụng nhắn tin thời gian thực đa nền tảng, thuận tiện và dễ dàng cho công việc!**
 
 </div>
 
-## Công nghệ Sử dụng
 
-<table>
-<tr>
-<td align="center" width="50%">
 
-### Frontend
 
-<img src="https://img.shields.io/badge/React-19.2.0-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
-<img src="https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-<img src="https://img.shields.io/badge/Vite-7.2.4-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
-<img src="https://img.shields.io/badge/Tailwind_CSS-4.1.18-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
-<img src="https://img.shields.io/badge/Tauri-2.9.1-FFC131?style=flat-square&logo=tauri&logoColor=white" alt="Tauri" />
-
-</td>
-<td align="center" width="50%">
-
-### Backend
-
-<img src="https://img.shields.io/badge/FastAPI-0.109.0-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
-<img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
-<img src="https://img.shields.io/badge/MongoDB-Motor-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
-<img src="https://img.shields.io/badge/WebSocket-12.0-010101?style=flat-square&logo=websocket&logoColor=white" alt="WebSocket" />
-
-</td>
-</tr>
-</table>
 
 ## Cấu trúc dự án
 
@@ -75,41 +60,36 @@ alo-chat/
 ### Nhắn tin thời gian thực
 - Gửi và nhận tin nhắn tức thì qua WebSocket
 - Hiển thị trạng thái online/offline của bạn bè
-- Thông báo "đang gõ" (typing indicator)
-- Đánh dấu tin nhắn đã đọc
+- Đánh dấu trạng thái tin nhắn
 
 ### Quản lý hội thoại
 - Chat riêng tư (1-1) với bạn bè
-- Chat nhóm với nhiều thành viên
-- "Cloud của tôi" - ghi chú cá nhân (tương tự Saved Messages của Telegram)
+- "Cloud của tôi" cho ghi chú cá nhân
 - Ghim hội thoại quan trọng lên đầu danh sách
 - Xóa lịch sử chat hoặc xóa toàn bộ hội thoại
 
 ### Quản lý bạn bè
-- Tìm kiếm người dùng theo tên
+- Tìm kiếm người dùng theo tên đăng nhập
 - Gửi/nhận/chấp nhận/từ chối lời mời kết bạn
-- Thông báo real-time về lời mời kết bạn mới
-- Xem danh sách bạn bè với trạng thái online
+- Xem danh sách bạn bè kèm trạng thái online/offline
 
 ### Chia sẻ tệp tin
 - Upload và gửi hình ảnh trong chat
-- Hỗ trợ nhiều định dạng file (PDF, DOC, XLS, ZIP...)
-- Giới hạn kích thước file: 10MB
+- Hỗ trợ nhiều định dạng file (PDF, DOC, ZIP, RAR, TXT...)
 
-### Ứng dụng Desktop
-- Đóng gói thành ứng dụng desktop với Tauri
-- Hỗ trợ Windows, macOS và Linux
-- Thông báo hệ thống (system notifications)
+### Ứng dụng Desktop (Tauri)
+- Chạy dưới dạng ứng dụng độc lập trên Windows, macOS, Linux
+- Tích hợp thông báo hệ thống và giao diện tùy biến
 
 ## Cài đặt chương trình
 
 ### Yêu cầu hệ thống
 - Node.js 18+ và npm/yarn
-- Python 3.8+
-- MongoDB (local hoặc MongoDB Atlas)
+- Python 3.10+
+- MongoDB 6.0+ (Local hoặc MongoDB Atlas)
 - Rust và Cargo (cho Tauri desktop app)
 
-### 1. Cài đặt Frontend
+### 1. Cài đặt Client
 
 ```bash
 # Clone repository
@@ -125,29 +105,10 @@ npm run dev
 
 Frontend sẽ chạy tại: `http://localhost:5173`
 
-### 2. Cài đặt Backend
+### 2. Cài đặt Server (Backend)
 
-```bash
-# Di chuyển vào thư mục server
-cd server
+Xem hướng dẫn cài đặt chi tiết trong [`server/README.md`](server/README.md).
 
-# Tạo virtual environment
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/macOS
-
-# Cài đặt dependencies
-pip install -r requirements.txt
-
-# Tạo file .env từ template
-copy .env.example .env  # Windows
-# cp .env.example .env  # Linux/macOS
-
-# Chạy server
-python main.py
-```
-
-Backend sẽ chạy tại: `http://localhost:8000`
 
 ### 3. Build Desktop App (Tùy chọn)
 
@@ -155,12 +116,6 @@ Backend sẽ chạy tại: `http://localhost:8000`
 # Từ thư mục gốc
 npm run tauri build
 ```
-
-## Tài liệu API
-
-Khi server đang chạy, tài liệu API có sẵn tại:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
 
 ## Tài khoản Demo
 
