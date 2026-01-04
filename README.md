@@ -174,6 +174,7 @@ Khi khởi động lần đầu, hệ thống sẽ tự động tạo các tài 
 - [`CHANGELOG.md`](CHANGELOG.md) - Lịch sử thay đổi các phiên bản
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) - Danh sách thư viện và dependencies
 - [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) - Hướng dẫn đóng góp
+- [`.github/CODE_OF_CONDUCT.md`](.github/CODE_OF_CONDUCT.md) - Bộ quy tắc ứng xử
 
 ---
 
