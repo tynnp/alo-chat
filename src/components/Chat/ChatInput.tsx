@@ -1,13 +1,15 @@
 import { Paperclip, Smile, Send, X, Loader2 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
+import { socketService } from '../../services/socket';
 
 interface ChatInputProps {
     onSendMessage: (content: string, type?: 'text' | 'file' | 'image', fileUrl?: string, fileName?: string) => void;
     onFileUpload: (file: File) => Promise<{ file_url: string; file_name: string; file_type: 'image' | 'file' } | null>;
+    conversationId?: string;
 }
 
-export default function ChatInput({ onSendMessage, onFileUpload }: ChatInputProps) {
+export default function ChatInput({ onSendMessage, onFileUpload, conversationId }: ChatInputProps) {
     const [message, setMessage] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<{ file: File; preview?: string } | null>(null);
@@ -15,6 +17,16 @@ export default function ChatInput({ onSendMessage, onFileUpload }: ChatInputProp
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const lastTypingRef = useRef<number>(0);
+
+    const emitTyping = useCallback(() => {
+        if (!conversationId) return;
+        const now = Date.now();
+        if (now - lastTypingRef.current > 2000) {
+            lastTypingRef.current = now;
+            socketService.sendTyping(conversationId);
+        }
+    }, [conversationId]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -32,6 +44,7 @@ export default function ChatInput({ onSendMessage, onFileUpload }: ChatInputProp
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         setMessage(prev => prev + emojiData.emoji);
         inputRef.current?.focus();
+        emitTyping();
     };
 
     const handleSend = async () => {
@@ -130,7 +143,10 @@ export default function ChatInput({ onSendMessage, onFileUpload }: ChatInputProp
                         type="text"
                         ref={inputRef}
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={(e) => {
+                            setMessage(e.target.value);
+                            emitTyping();
+                        }}
                         onKeyDown={handleKeyDown}
                         placeholder={selectedFile ? "Nhấn gửi để tải file..." : "Nhập tin nhắn..."}
                         disabled={!!selectedFile}

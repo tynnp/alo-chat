@@ -266,10 +266,13 @@ async def handle_typing(user_id: str, payload: dict):
     
     conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
     if conversation:
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        user_name = user.get("display_name", user.get("username", "Người dùng")) if user else "Người dùng"
+        
         member_ids = [m["user_id"] for m in conversation["members"] if m["user_id"] != user_id]
         asyncio.create_task(manager.broadcast_to_users({
             "event": "user:typing",
-            "payload": {"conversationId": conversation_id, "userId": user_id}
+            "payload": {"conversationId": conversation_id, "userId": user_id, "userName": user_name}
         }, member_ids))
 
 if __name__ == "__main__":

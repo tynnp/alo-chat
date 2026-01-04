@@ -28,6 +28,7 @@ interface ChatState {
     conversations: Conversation[];
     activeConversationId: string | null;
     messages: Record<string, Message[]>;
+    typingUsers: Record<string, { userId: string; userName: string; timestamp: number }>;
 
     setConversations: (conversations: Conversation[]) => void;
     addConversation: (conversation: Conversation) => void;
@@ -41,12 +42,16 @@ interface ChatState {
     updateMessageStatus: (conversationId: string, messageId: string, status: Message['status']) => void;
     updateAllMessagesStatus: (conversationId: string, userId: string, status: Message['status']) => void;
     resolveOptimisticMessage: (conversationId: string, clientId: string, serverId: string) => void;
+
+    setTypingUser: (conversationId: string, userId: string, userName: string) => void;
+    clearTypingUser: (conversationId: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
     conversations: [],
     activeConversationId: null,
     messages: {},
+    typingUsers: {},
 
     setConversations: (conversations) => set({ conversations }),
 
@@ -165,5 +170,19 @@ export const useChatStore = create<ChatState>((set) => ({
                     };
                 }),
             };
+        }),
+
+    setTypingUser: (conversationId, userId, userName) =>
+        set((state) => ({
+            typingUsers: {
+                ...state.typingUsers,
+                [conversationId]: { userId, userName, timestamp: Date.now() }
+            }
+        })),
+
+    clearTypingUser: (conversationId) =>
+        set((state) => {
+            const { [conversationId]: _, ...rest } = state.typingUsers;
+            return { typingUsers: rest };
         }),
 }));

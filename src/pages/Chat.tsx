@@ -5,6 +5,7 @@ import ContactListSidebar from '../components/Chat/ContactListSidebar';
 import ChatHeader from '../components/Chat/ChatHeader';
 import MessageList from '../components/Chat/MessageList';
 import ChatInput from '../components/Chat/ChatInput';
+import TypingIndicator from '../components/Chat/TypingIndicator';
 import { MessagesSquare } from 'lucide-react';
 import { useChatStore, type Message } from '../stores/chatStore';
 import { useAuthStore } from '../stores/authStore';
@@ -297,8 +298,11 @@ export default function Chat() {
                             conversationType={activeConversation?.type}
                         />
 
+                        {/* Typing Indicator */}
+                        <TypingIndicator conversationId={activeConversationId} />
+
                         {/* Input Area */}
-                        <ChatInput onSendMessage={handleSendMessage} onFileUpload={handleFileUpload} />
+                        <ChatInput onSendMessage={handleSendMessage} onFileUpload={handleFileUpload} conversationId={activeConversationId ?? undefined} />
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

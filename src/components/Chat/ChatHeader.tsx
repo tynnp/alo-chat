@@ -14,6 +14,20 @@ interface ChatHeaderProps {
 }
 
 export default function ChatHeader({ conversation }: ChatHeaderProps) {
+    const getStatusText = () => {
+        if (conversation.type === 'private') {
+            return conversation.status === 'online'
+                ? 'Đang hoạt động'
+                : `Hoạt động ${conversation.lastOnline || 'gần đây'}`;
+        }
+
+        if (conversation.type === 'group') {
+            return `${conversation.memberCount || 0} thành viên`;
+        }
+
+        return 'Cloud của tôi';
+    };
+
     return (
         <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
             {/* User Info */}
@@ -42,14 +56,7 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
                 <div className="flex flex-col">
                     <h3 className="font-bold text-gray-800 leading-tight">{conversation.name}</h3>
                     <p className="text-xs text-gray-500">
-                        {conversation.type === 'private' ? (
-                            conversation.status === 'online' ? 'Đang hoạt động' :
-                                `Hoạt động ${conversation.lastOnline || 'gần đây'}`
-                        ) : (
-                            conversation.type === 'group' ?
-                                `${conversation.memberCount || 0} thành viên` :
-                                'Cloud của tôi'
-                        )}
+                        {getStatusText()}
                     </p>
                 </div>
             </div>

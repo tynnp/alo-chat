@@ -358,5 +358,25 @@ async function handleMessage(data: { event: string; payload: unknown }) {
             friendStore.addFriend(friend);
             break;
         }
+
+        case 'user:typing': {
+            const { conversationId, userId, userName } = data.payload as {
+                conversationId: string;
+                userId: string;
+                userName?: string;
+            };
+
+            if (userId !== authStore.user?.id) {
+                chatStore.setTypingUser(conversationId, userId, userName || 'Người dùng');
+
+                setTimeout(() => {
+                    const currentTyping = useChatStore.getState().typingUsers[conversationId];
+                    if (currentTyping && currentTyping.userId === userId) {
+                        chatStore.clearTypingUser(conversationId);
+                    }
+                }, 3000);
+            }
+            break;
+        }
     }
 }
