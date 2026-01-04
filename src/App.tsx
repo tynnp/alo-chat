@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { useChatStore } from './stores/chatStore';
 import { useFriendStore } from './stores/friendStore';
@@ -117,31 +117,40 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppContent() {
+  const location = useLocation();
+  const isNotification = location.pathname === '/notification-pop';
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden relative">
+      {!isNotification && <TitleBar />}
+      <div className={`flex-1 ${isNotification ? '' : 'pt-8'} overflow-hidden`}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <AppInitializer>
+                  <Chat />
+                </AppInitializer>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/notification-pop" element={<NotificationPopup />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex flex-col h-screen overflow-hidden relative">
-        <TitleBar />
-        <div className="flex-1 pt-8 overflow-hidden">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <AppInitializer>
-                    <Chat />
-                  </AppInitializer>
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/notification-pop" element={<NotificationPopup />} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }
