@@ -112,7 +112,3 @@ Khi đề xuất tính năng mới:
 ## Liên hệ
 
 Nếu có câu hỏi, vui lòng tạo Issue trên GitHub hoặc liên hệ qua email: **tynnp.dhsp@gmail.com**
-
----
-
-Cảm ơn bạn đã đóng góp cho Alo Chat!
