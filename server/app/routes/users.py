@@ -13,7 +13,10 @@ async def search_users(q: str, current_user: dict = Depends(get_current_user)):
     db = get_database()
     
     cursor = db.users.find({
-        "username": {"$regex": q, "$options": "i"},
+        "$or": [
+            {"username": {"$regex": q, "$options": "i"}},
+            {"display_name": {"$regex": q, "$options": "i"}}
+        ],
         "_id": {"$ne": ObjectId(current_user["_id"])}
     }).limit(20)
     
