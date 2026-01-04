@@ -34,12 +34,17 @@ export default function TitleBar() {
     };
     const handleClose = () => appWindow.close();
 
+    const handleDragStart = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        appWindow.startDragging();
+    };
+
     return (
         <div
-            data-tauri-drag-region
-            className="h-8 bg-white border-b border-gray-200 flex items-center justify-between px-4 select-none fixed top-0 left-0 right-0 z-[9999]"
+            onMouseDown={handleDragStart}
+            className="h-8 bg-white border-b border-gray-200 flex items-center justify-between pl-4 select-none fixed top-0 left-0 right-0 z-[9999]"
         >
-            <div className="flex items-center gap-2 pointer-events-none">
+            <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-blue-950">
                     ALO {user ? `- ${user.displayName}` : ''}
                 </span>
@@ -48,6 +53,7 @@ export default function TitleBar() {
             <div className="flex items-center h-full">
                 <button
                     onClick={handleMinimize}
+                    tabIndex={-1}
                     className="h-full px-4 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
                     title="Thu nhỏ"
                 >
@@ -55,6 +61,7 @@ export default function TitleBar() {
                 </button>
                 <button
                     onClick={handleMaximize}
+                    tabIndex={-1}
                     className="h-full px-4 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
                     title={isMaximized ? "Thu nhỏ" : "Phóng to"}
                 >
@@ -62,6 +69,7 @@ export default function TitleBar() {
                 </button>
                 <button
                     onClick={handleClose}
+                    tabIndex={-1}
                     className="h-full px-4 flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white transition-colors"
                     title="Đóng"
                 >
