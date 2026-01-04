@@ -137,7 +137,7 @@ export default function MessageList({
     };
 
     return (
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 custom-scrollbar">
+        <div className="flex-1 p-4 overflow-y-auto space-y-6 bg-gray-50 custom-scrollbar">
             {messages.map((msg) => {
                 const isOwn = msg.senderId === currentUserId;
 
@@ -162,17 +162,17 @@ export default function MessageList({
                             : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                             }`}>
                             {renderMessageContent(msg, isOwn)}
-                            <span className={`text-[10px] absolute -bottom-5 ${isOwn ? 'right-0' : 'left-0'} text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap flex items-center gap-1`}>
+                            <div className={`text-[10px] absolute -bottom-5 ${isOwn ? 'right-0' : 'left-0'} text-gray-400 font-medium whitespace-nowrap flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
                                 {msg.timestamp}
                                 {isOwn && msg.status && (
-                                    <span>
+                                    <span className="flex items-center">
                                         {msg.status === 'sending' && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                                         {msg.status === 'sent' && <Check className="w-3 h-3" />}
                                         {msg.status === 'received' && <CheckCheck className="w-3 h-3" />}
                                         {msg.status === 'read' && <CheckCheck className="w-3 h-3 text-blue-300" />}
                                     </span>
                                 )}
-                            </span>
+                            </div>
                         </div>
 
                         {isOwn && <Avatar />}
