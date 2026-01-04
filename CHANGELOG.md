@@ -1,6 +1,16 @@
 # Changelog
 
-Tất cả các thay đổi đáng chú ý đối với dự án này sẽ được ghi lại trong file này.
+Tất cả các thay đổi đáng chú ý đối với dự án này sẽ được ghi lại trong file này. Xem thêm mẫu changelog [ở đây](.github/CHANGELOG_TEMPLATE.md).
+
+## [0.2.0] - 2026-01-04
+
+### Thêm mới
+- Trạng thái "Đang soạn tin nhắn".
+- Tìm kiếm người dùng theo tên.
+- Emoij cho trò chuyện.
+
+### Sửa lỗi
+- Request lời mời kết bạn và đồng ý kết bạn bị gửi 2 lần 1 lúc.
 
 ## [0.1.0] - 2026-01-04
 

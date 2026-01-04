@@ -2,7 +2,7 @@
 
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=50&pause=1000&color=24C8DB&center=true&vCenter=true&width=435&lines=ALO+CHAT)](https://git.io/typing-svg)
 
-<img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version" />
+<img src="https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge" alt="Version" />
 <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
 <img src="https://img.shields.io/badge/status-Active-success?style=for-the-badge" alt="Status" />
 
@@ -55,8 +55,8 @@ alo-chat/
 
 ### Nhắn tin thời gian thực
 - Gửi và nhận tin nhắn tức thì qua WebSocket
-- Hiển thị trạng thái online/offline của bạn bè
-- Đánh dấu trạng thái tin nhắn
+- Hiển thị trạng thái online/offline, đang soạn tin nhắn của bạn bè
+- Đánh dấu trạng thái tin nhắn đã gửi, đã nhận, đã xem
 
 ### Quản lý hội thoại
 - Chat riêng tư (1-1) với bạn bè
