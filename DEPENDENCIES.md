@@ -31,6 +31,7 @@ Tài liệu này liệt kê tất cả các thư viện và gói phụ thuộc �
 | react-router-dom | 7.11.0 | MIT | Routing cho ứng dụng React | https://reactrouter.com/ |
 | zustand | 5.0.9 | MIT | Thư viện quản lý state nhẹ và linh hoạt | https://zustand-demo.pmnd.rs/ |
 | lucide-react | 0.562.0 | ISC | Thư viện icon đẹp và nhất quán cho React | https://lucide.dev/ |
+| emoji-picker-react | latest | MIT | Component chọn emoji cho React | https://github.com/ealush/emoji-picker-react |
 | react-easy-crop | 5.5.6 | MIT | Component crop ảnh cho React | https://github.com/ricardo-ch/react-easy-crop |
 | @tauri-apps/api | 2.9.1 | MIT/Apache-2.0 | API JavaScript cho Tauri desktop apps | https://tauri.app/ |
 | @tauri-apps/plugin-dialog | 2.4.2 | MIT/Apache-2.0 | Plugin dialog cho Tauri | https://tauri.app/ |
