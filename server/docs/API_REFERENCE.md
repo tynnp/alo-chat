@@ -20,13 +20,13 @@ Tài liệu chi tiết về các API Endpoints và WebSocket Events của Alo Ch
 ### Conversations
 | Method | Endpoint | Mô tả | Chi tiết |
 |--------|----------|-------|----------|
-| GET | `/api/conversations` | Danh sách hội thoại | Bao gồm tin nhắn cuối và số tin chưa đọc |
-| POST | `/api/conversations` | Tạo hội thoại mới | `{type: "private"|"group", member_ids: [], name?}` |
-| GET | `/api/conversations/{id}/messages` | Lấy lịch sử tin nhắn | Query: `limit=50` |
+| GET | `/api/conversations` | Danh sách hội thoại | Trả về `{"conversations": [...]}` kèm `last_message`, `unread_count`, `is_pinned` |
+| POST | `/api/conversations` | Tạo hội thoại mới | `{type, member_ids, name?}` -> Trả về thông tin hội thoại mới |
+| GET | `/api/conversations/{id}/messages` | Lấy lịch sử tin nhắn | Trả về `{"messages": [...]}` (mặc định 50 tin gần nhất) |
 | POST | `/api/conversations/{id}/members` | Thêm thành viên | `{member_id}` (Chỉ Admin) |
 | PUT | `/api/conversations/{id}/pin` | Ghim/Bỏ ghim | Toggle trạng thái ghim của hội thoại |
-| DELETE | `/api/conversations/{id}/messages` | Xóa lịch sử chat | Xóa tất cả tin nhắn trong hội thoại |
-| DELETE | `/api/conversations/{id}` | Xóa hội thoại | Xóa toàn bộ dữ liệu (trừ hội thoại "self") |
+| DELETE | `/api/conversations/{id}/messages` | Xóa lịch sử chat | `{"deleted_count", "message"}` |
+| DELETE | `/api/conversations/{id}` | Xóa hội thoại | `{"message"}` (Trừ hội thoại "self") |
 
 ### Users & Friends
 | Method | Endpoint | Mô tả |
@@ -35,15 +35,15 @@ Tài liệu chi tiết về các API Endpoints và WebSocket Events của Alo Ch
 | POST | `/api/users/avatar` | Upload ảnh đại diện (Multipart/form-data) |
 | GET | `/api/users/{id}` | Lấy profile người dùng khác |
 | GET | `/api/friends` | Danh sách bạn bè hiện tại |
-| GET | `/api/friends/requests` | Danh sách lời mời kết bạn đang chờ |
-| POST | `/api/friends/request` | Gửi lời mời kết bạn |
-| POST | `/api/friends/accept/{id}` | Chấp nhận kết bạn |
+| GET | `/api/friends/requests` | Danh sách lời mời chờ | Trả về `{"requests": [...]}` kèm thông tin người gửi |
+| POST | `/api/friends/request` | Gửi lời mời kết bạn | `{to_user_id}` -> `{"message", "request_id"}` |
+| POST | `/api/friends/accept/{id}` | Chấp nhận kết bạn | `{"message", "new_friend": FriendResponse}` |
 | DELETE | `/api/friends/{id}` | Hủy kết bạn |
 
 ### Files
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| POST | `/api/files/upload` | Upload file/ảnh gửi trong chat (Tối đa 10MB) |
+| POST | `/api/files/upload` | Upload file/ảnh gửi trong chat | Trả về `{"file_url", "file_name", "file_size", "file_type"}` |
 
 ---
 
@@ -65,10 +65,11 @@ Giao thức giao tiếp thời gian thực sử dụng định dạng JSON: `{"e
 |-------|---------|-------|
 | `pong` | - | Response cho ping |
 | `message:new` | `{_id, content, sender_id, ...}` | Nhận tin nhắn mới từ người khác |
-| `message:status`| `{messageId, status: "read", userId}` | Cập nhật trạng thái tin nhắn (đã đọc) |
-| `message:read_all` | `{conversationId, userId}` | Thông báo đã đọc tất cả |
-| `user:status` | `{userId, status: "online"/"offline", lastOnline?}` | Cập nhật trạng thái bạn bè |
-| `user:typing` | `{conversationId, userId}` | Người khác đang soạn thảo |
-| `friend:request_received` | `{id, from_user_id, from_user_name, ...}` | Nhận lời mời kết bạn |
-| `friend:request_accepted` | `{request_id, new_friend}` | Lời mời được chấp nhận |
-| `conversation:deleted` | `{conversationId, deletedBy}` | Cuộc hội thoại bị xóa |
+| `message:status`| `{messageId, status, userId, conversationId}` | Cập nhật trạng thái tin nhắn |
+| `message:read_all` | `{conversationId, userId}` | Thông báo đã đọc tất cả tin nhắn trong hội thoại |
+| `user:status` | `{userId, status, lastOnline?}` | Cập nhật trạng thái online/offline của bạn bè |
+| `user:update` | `{userId, avatarUrl?, displayName?}` | Cập nhật thông tin profile (ví dụ: đổi avatar) |
+| `user:typing` | `{conversationId, userId, userName}` | Người khác đang soạn thảo tin nhắn |
+| `friend:request_received` | `{id, from_user_id, from_user_name, ...}` | Nhận được lời mời kết bạn mới |
+| `friend:request_accepted` | `{request_id, new_friend}` | Lời mời kết bạn đã gửi được chấp nhận |
+| `conversation:deleted` | `{conversationId, deletedBy}` | Một cuộc hội thoại bị xóa |

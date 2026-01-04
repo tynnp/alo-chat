@@ -58,7 +58,8 @@ Tài liệu chi tiết về cấu trúc dữ liệu và các Collection trong Mo
       at: DateTime
     }
   ],
-  created_at: DateTime
+  created_at: DateTime,
+  clientId: String | null     // ID tạm thời từ phía client
 }
 ```
 
