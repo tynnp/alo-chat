@@ -63,9 +63,12 @@ export const useFriendStore = create<FriendState>((set) => ({
 
     setFriends: (friends) => set({ friends }),
 
-    addFriend: (friend) => set((state) => ({
-        friends: [...state.friends, friend]
-    })),
+    addFriend: (friend) => set((state) => {
+        if (state.friends.some(f => f.id === friend.id)) {
+            return state;
+        }
+        return { friends: [...state.friends, friend] };
+    }),
 
     removeFriend: (friendId) => set((state) => ({
         friends: state.friends.filter(f => f.id !== friendId)
@@ -73,9 +76,12 @@ export const useFriendStore = create<FriendState>((set) => ({
 
     setFriendRequests: (requests) => set({ friendRequests: requests }),
 
-    addFriendRequest: (request) => set((state) => ({
-        friendRequests: [request, ...state.friendRequests]
-    })),
+    addFriendRequest: (request) => set((state) => {
+        if (state.friendRequests.some(r => r.id === request.id)) {
+            return state;
+        }
+        return { friendRequests: [request, ...state.friendRequests] };
+    }),
 
     removeFriendRequest: (requestId) => set((state) => ({
         friendRequests: state.friendRequests.filter(r => r.id !== requestId)
@@ -83,9 +89,12 @@ export const useFriendStore = create<FriendState>((set) => ({
 
     setSentRequests: (requests) => set({ sentRequests: requests }),
 
-    addSentRequest: (request) => set((state) => ({
-        sentRequests: [request, ...state.sentRequests]
-    })),
+    addSentRequest: (request) => set((state) => {
+        if (state.sentRequests.some(r => r.id === request.id)) {
+            return state;
+        }
+        return { sentRequests: [request, ...state.sentRequests] };
+    }),
 
     removeSentRequest: (requestId) => set((state) => ({
         sentRequests: state.sentRequests.filter(r => r.id !== requestId)
