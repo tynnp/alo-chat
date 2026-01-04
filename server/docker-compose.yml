@@ -1,0 +1,11 @@
+services:
+  alo-chat-server:
+    image: alo-chat-server:latest
+    container_name: alo-chat-server
+    ports:
+      - "8386:8000"
+    volumes:
+      - ./uploads:/app/uploads
+    env_file:
+      - .env
+    restart: unless-stopped

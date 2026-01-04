@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docs (không cần trong production)
+docs/
+README.md
+
+# Uploads (sẽ mount volume riêng)
+uploads/
+
+# Cache
+.pytest_cache/
+.mypy_cache/

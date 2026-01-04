@@ -120,3 +120,31 @@ Tài liệu chi tiết về hệ thống kỹ thuật của Alo Chat Server:
 
 - [API Reference Specification](docs/API_REFERENCE.md): Chi tiết về các RESTful API endpoints và WebSocket communication protocol.
 - [Database Architecture & Schema](docs/DATABASE_SCHEMA.md): Mô tả cấu trúc dữ liệu, các collections và chỉ mục (indexing).
+
+## Triển khai với Docker
+
+### Build và đóng gói (Windows)
+
+Chạy file `build-and-save.bat` để build Docker image và tạo thư mục `docker-image/` chứa tất cả files cần thiết:
+
+```batch
+.\build-and-save.bat
+```
+
+Sau khi hoàn tất, copy thư mục `docker-image/` lên server.
+
+### Deploy trên server (Linux)
+
+Xem hướng dẫn chi tiết trong file `README.md` của thư mục `docker-image/` sau khi build.
+
+### Các lệnh deploy.sh
+
+| Lệnh | Mô tả |
+|------|-------|
+| `./deploy.sh load` | Tải Docker image từ file .tar |
+| `./deploy.sh up` | Khởi động container |
+| `./deploy.sh down` | Dừng container |
+| `./deploy.sh restart` | Khởi động lại container |
+| `./deploy.sh logs` | Xem logs |
+| `./deploy.sh status` | Kiểm tra trạng thái |
+| `./deploy.sh clean` | Dọn dẹp Docker |

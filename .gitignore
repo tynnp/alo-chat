@@ -68,3 +68,6 @@ uploads/
 
 # Security
 server/default_users.json
+
+# Docker
+server/docker-image/
