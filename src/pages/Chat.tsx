@@ -86,6 +86,24 @@ export default function Chat() {
         };
     }, []);
 
+    useEffect(() => {
+        const unlisten = listen('open-contacts', async () => {
+            try {
+                const win = getCurrentWebviewWindow();
+                await win.unminimize();
+                await win.maximize();
+                await win.show();
+                await win.setFocus();
+            } catch (err) { }
+
+            setActiveTab('contacts');
+        });
+
+        return () => {
+            unlisten.then(f => f());
+        };
+    }, []);
+
     // Tải tin nhắn khi chọn cuộc hội thoại
     useEffect(() => {
         if (!activeConversationId || !token) return;

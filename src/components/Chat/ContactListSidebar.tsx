@@ -13,7 +13,9 @@ interface ContactListSidebarProps {
 export default function ContactListSidebar({ onSelectContact, width, setWidth }: ContactListSidebarProps) {
     const isResizing = useRef(false);
     const { friends, friendRequests, sentRequests, removeFriendRequest, addFriend, addSentRequest } = useFriendStore();
-    const { token } = useAuthStore();
+    const { token, user } = useAuthStore();
+
+    const filteredFriends = friends.filter(f => f.id !== user?.id);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserResponse[]>([]);
@@ -288,17 +290,17 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
 
                 {/* Friends List */}
                 <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Bạn bè ({friends.length})
+                    Bạn bè ({filteredFriends.length})
                 </div>
 
-                {friends.length === 0 ? (
+                {filteredFriends.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                         <p className="text-sm">Chưa có bạn bè nào</p>
                         <p className="text-xs mt-1">Tìm kiếm và kết bạn ngay!</p>
                     </div>
                 ) : (
                     <div className="space-y-1 px-2">
-                        {friends.map(friend => (
+                        {filteredFriends.map(friend => (
                             <div
                                 key={friend.id}
                                 onClick={() => onSelectContact(friend.id)}

@@ -328,6 +328,14 @@ async function handleMessage(data: { event: string; payload: unknown }) {
             };
 
             friendStore.addFriendRequest(newRequest);
+            const notificationStore = useNotificationStore.getState();
+
+            notificationStore.addNotification({
+                senderName: reqPayload.from_user_name,
+                senderAvatar: reqPayload.from_user_avatar,
+                content: 'đã gửi lời mời kết bạn',
+                conversationId: `friend_request:${reqPayload.id}`,
+            });
             break;
         }
 

@@ -1,6 +1,7 @@
 import { MessagesSquare, Users, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
+import { useFriendStore } from '../../stores/friendStore';
 import { socketService } from '../../services/socket';
 import AvatarUpload from './AvatarUpload';
 
@@ -12,7 +13,9 @@ interface NavigationSidebarProps {
 export default function NavigationSidebar({ activeTab, setActiveTab }: NavigationSidebarProps) {
     const { user, logout } = useAuthStore();
     const { conversations } = useChatStore();
+    const { friendRequests } = useFriendStore();
     const totalUnread = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
+    const pendingRequests = friendRequests.length;
 
     return (
         <div className="w-16 h-full bg-blue-50 border-r border-blue-100 flex flex-col items-center py-2 justify-between">
@@ -37,13 +40,16 @@ export default function NavigationSidebar({ activeTab, setActiveTab }: Navigatio
 
                 <button
                     onClick={() => setActiveTab('contacts')}
-                    className={`p-2 rounded-xl transition-all ${activeTab === 'contacts'
+                    className={`p-2 rounded-xl transition-all relative ${activeTab === 'contacts'
                         ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20'
                         : 'text-gray-500 hover:bg-blue-100 hover:text-blue-600'
                         }`}
                     title="Contacts"
                 >
                     <Users className="w-5 h-5" />
+                    {pendingRequests > 0 && (
+                        <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-50"></div>
+                    )}
                 </button>
             </div>
 

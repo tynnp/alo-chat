@@ -22,7 +22,11 @@ export default function NotificationPopup() {
 
     const handleClick = async () => {
         try {
-            await emit('open-conversation', { conversationId });
+            if (conversationId?.startsWith('friend_request:')) {
+                await emit('open-contacts', {});
+            } else {
+                await emit('open-conversation', { conversationId });
+            }
 
             const mainWindow = await WebviewWindow.getByLabel('main');
             if (mainWindow) {
