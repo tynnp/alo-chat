@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="0.2.0",
+    version="0.2.1",
     lifespan=lifespan
 )
 
@@ -50,7 +50,7 @@ app.include_router(files_router, prefix="/api")
 
 @app.get("/")
 async def root():
-    return {"message": "Alo Chat API", "version": "0.2.0"}
+    return {"message": "Alo Chat API", "version": "0.2.1"}
 
 @app.get("/health")
 async def health():

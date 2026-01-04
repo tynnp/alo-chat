@@ -2,6 +2,14 @@
 
 Tất cả các thay đổi đáng chú ý đối với dự án này sẽ được ghi lại trong file này. Xem thêm mẫu changelog [ở đây](.github/CHANGELOG_TEMPLATE.md).
 
+## [0.2.1] - 2026-01-04
+
+### Sửa lỗi
+- Đồng bộ trạng thái bạn bè ngay lập tức sau khi chấp nhận lời mời.
+- Đồng bộ ảnh đại diện thời gian thực.
+- Tối ưu hóa thanh cuộn hội thoại.
+- Một số lỗi UI.
+
 ## [0.2.0] - 2026-01-04
 
 ### Thêm mới
