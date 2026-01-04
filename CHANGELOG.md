@@ -2,7 +2,7 @@
 
 Tất cả các thay đổi đáng chú ý đối với dự án này sẽ được ghi lại trong file này.
 
-## [0.1.0-beta] - 2026-01-04
+## [0.1.0] - 2026-01-04
 
 ### Thêm mới
 - **Nền tảng ứng dụng:** Khởi tạo dự án đa nền tảng sử dụng Tauri và React.

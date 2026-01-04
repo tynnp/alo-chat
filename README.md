@@ -2,7 +2,7 @@
 
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=50&pause=1000&color=24C8DB&center=true&vCenter=true&width=435&lines=ALO+CHAT)](https://git.io/typing-svg)
 
-<img src="https://img.shields.io/badge/version-0.1.0--beta-blue?style=for-the-badge" alt="Version" />
+<img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version" />
 <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
 <img src="https://img.shields.io/badge/status-Active-success?style=for-the-badge" alt="Status" />
 
@@ -20,10 +20,6 @@
 **Ứng dụng nhắn tin thời gian thực đa nền tảng, thuận tiện và dễ dàng cho công việc!**
 
 </div>
-
-
-
-
 
 ## Cấu trúc dự án
 
