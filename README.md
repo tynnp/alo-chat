@@ -1,6 +1,6 @@
 <div align="center">
 
-# Alo Chat
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=50&pause=1000&color=24C8DB&center=true&vCenter=true&width=435&lines=ALO+CHAT)](https://git.io/typing-svg)
 
 <img src="https://img.shields.io/badge/version-0.1.0--beta-blue?style=for-the-badge" alt="Version" />
 <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
