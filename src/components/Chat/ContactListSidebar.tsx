@@ -100,21 +100,23 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
         }
     };
 
-    const handleAcceptRequest = async (requestId: string, fromUserId: string, fromUserName: string) => {
+    const handleAcceptRequest = async (requestId: string) => {
         if (!token) return;
         setActionLoading(requestId);
 
         try {
-            await friendsApi.acceptRequest(token, requestId);
+            const response = await friendsApi.acceptRequest(token, requestId);
             removeFriendRequest(requestId);
 
-            // Thêm vào danh sách bạn bè
-            addFriend({
-                id: fromUserId,
-                username: '',
-                displayName: fromUserName,
-                status: 'offline',
-            });
+            if (response.new_friend) {
+                addFriend({
+                    id: response.new_friend.id,
+                    username: response.new_friend.username,
+                    displayName: response.new_friend.display_name,
+                    avatarUrl: response.new_friend.avatar_url,
+                    status: response.new_friend.status,
+                });
+            }
         } catch (error) {
             alert((error as Error).message);
         } finally {
@@ -242,7 +244,7 @@ export default function ContactListSidebar({ onSelectContact, width, setWidth }:
                                     </div>
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => handleAcceptRequest(req.id, req.fromUserId, req.fromUserName)}
+                                            onClick={() => handleAcceptRequest(req.id)}
                                             disabled={actionLoading === req.id}
                                             className="flex-1 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
                                         >

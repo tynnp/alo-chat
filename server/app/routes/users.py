@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.database import get_database
 from app.services import get_current_user
 from app.config import get_settings
+from app.websocket import manager
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -38,6 +39,7 @@ async def search_users(q: str, current_user: dict = Depends(get_current_user)):
 async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     settings = get_settings()
     db = get_database()
+    user_id = str(current_user["_id"])
     
     avatar_dir = os.path.join("uploads", "avatars")
     if not os.path.exists(avatar_dir):
@@ -54,9 +56,31 @@ async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depen
     
     # Cập nhật database
     await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
+        {"_id": ObjectId(user_id)},
         {"$set": {"avatar_url": avatar_url}}
     )
+
+    friendships_cursor = db.friendships.find({
+        "status": "accepted",
+        "$or": [
+            {"from_user_id": user_id},
+            {"to_user_id": user_id}
+        ]
+    })
+    friendships = await friendships_cursor.to_list(1000)
+    friend_ids = []
+    for fs in friendships:
+        fid = fs["to_user_id"] if fs["from_user_id"] == user_id else fs["from_user_id"]
+        friend_ids.append(fid)
+
+    if friend_ids:
+        await manager.broadcast_to_users({
+            "event": "user:update",
+            "payload": {
+                "userId": user_id,
+                "avatarUrl": avatar_url
+            }
+        }, friend_ids)
     
     return {"avatar_url": avatar_url}
 

@@ -211,7 +211,12 @@ async def accept_friend_request(request_id: str, current_user: dict = Depends(ge
         }
     }, from_user_id)
     
-    return {"message": "Đã chấp nhận lời mời kết bạn"}
+    new_friend_info = await get_user_info(db, from_user_id)
+    
+    return {
+        "message": "Đã chấp nhận lời mời kết bạn",
+        "new_friend": new_friend_info
+    }
 
 @router.post("/reject/{request_id}")
 async def reject_friend_request(request_id: str, current_user: dict = Depends(get_current_user)):

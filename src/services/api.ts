@@ -101,7 +101,7 @@ export const friendsApi = {
         }),
 
     acceptRequest: (token: string, requestId: string) =>
-        apiRequest<{ message: string }>(`/api/friends/accept/${requestId}`, { method: 'POST', token }),
+        apiRequest<{ message: string; new_friend: FriendResponse }>(`/api/friends/accept/${requestId}`, { method: 'POST', token }),
 
     rejectRequest: (token: string, requestId: string) =>
         apiRequest<{ message: string }>(`/api/friends/reject/${requestId}`, { method: 'POST', token }),

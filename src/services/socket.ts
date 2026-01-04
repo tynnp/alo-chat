@@ -306,6 +306,21 @@ async function handleMessage(data: { event: string; payload: unknown }) {
             break;
         }
 
+        case 'user:update': {
+            const { userId, avatarUrl, displayName } = data.payload as { userId: string; avatarUrl?: string; displayName?: string };
+
+            const friends = friendStore.friends.map(f =>
+                f.id === userId ? {
+                    ...f,
+                    avatarUrl: avatarUrl !== undefined ? avatarUrl : f.avatarUrl,
+                    displayName: displayName !== undefined ? displayName : f.displayName,
+                } : f
+            );
+
+            friendStore.setFriends(friends);
+            break;
+        }
+
         case 'friend:request_received': {
             const reqPayload = data.payload as {
                 id: string;
