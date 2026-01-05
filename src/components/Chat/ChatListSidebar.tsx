@@ -69,10 +69,13 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
     }, [setWidth]);
 
     const getConversationDisplay = (conv: typeof conversations[0]) => {
+        const isMyMessage = conv.lastMessage && conv.lastMessage.senderId === user?.id;
+        const prefix = isMyMessage ? 'Bạn: ' : '';
+
         if (conv.type === 'self') {
             return {
                 name: 'Cloud của tôi',
-                lastMessage: conv.lastMessage?.content || 'Lưu trữ cá nhân',
+                lastMessage: conv.lastMessage?.content ? `${prefix}${conv.lastMessage.content}` : 'Lưu trữ cá nhân',
                 avatar: null,
                 type: 'self' as const,
             };
@@ -81,7 +84,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
         if (conv.type === 'group') {
             return {
                 name: conv.name || 'Nhóm chat',
-                lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
+                lastMessage: conv.lastMessage?.content ? `${prefix}${conv.lastMessage.content}` : 'Chưa có tin nhắn',
                 avatar: null,
                 type: 'group' as const,
             };
@@ -93,7 +96,7 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
 
         return {
             name: friend?.displayName || conv.name || 'Người dùng',
-            lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
+            lastMessage: conv.lastMessage?.content ? `${prefix}${conv.lastMessage.content}` : 'Chưa có tin nhắn',
             avatar: friend?.avatarUrl || null,
             type: 'private' as const,
         };
