@@ -22,12 +22,14 @@ interface MessageListProps {
     messages: Message[];
     currentUserId: string;
     conversationType?: 'private' | 'group' | 'self';
+    conversationId?: string;
 }
 
 export default function MessageList({
     messages,
     currentUserId,
-    conversationType
+    conversationType,
+    conversationId
 }: MessageListProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -39,10 +41,16 @@ export default function MessageList({
         const container = scrollContainerRef.current;
         if (!container) return true;
 
-        const threshold = 100;
+        const threshold = 15;
         const isBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + threshold;
         return isBottom;
     };
+
+    useEffect(() => {
+        prevMessagesCountRef.current = 0;
+        isAtBottomRef.current = true;
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, [conversationId]);
 
     useEffect(() => {
         const container = scrollContainerRef.current;
@@ -52,17 +60,19 @@ export default function MessageList({
             isAtBottomRef.current = checkIsAtBottom();
         };
 
-        container.addEventListener('scroll', handleScroll);
+        container.addEventListener('scroll', handleScroll, { passive: true });
         return () => container.removeEventListener('scroll', handleScroll);
     }, []);
 
     useEffect(() => {
-        const lastMessage = messages[messages.length - 1];
-        const isOwnMessage = lastMessage?.senderId === currentUserId;
         const isNewMessage = messages.length > prevMessagesCountRef.current;
+        if (isNewMessage) {
+            const lastMessage = messages[messages.length - 1];
+            const isOwnMessage = lastMessage?.senderId === currentUserId;
 
-        if (isAtBottomRef.current || (isNewMessage && isOwnMessage)) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            if (isAtBottomRef.current || isOwnMessage) {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         prevMessagesCountRef.current = messages.length;

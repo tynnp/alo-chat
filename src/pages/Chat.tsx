@@ -301,6 +301,7 @@ export default function Chat() {
                             messages={mappedMessages}
                             currentUserId={user?.id || ''}
                             conversationType={activeConversation?.type}
+                            conversationId={activeConversationId || undefined}
                         />
 
                         {/* Typing Indicator */}
