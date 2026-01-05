@@ -102,18 +102,25 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
     // Format thời gian
     const formatTime = (date?: Date) => {
         if (!date) return '';
+        const d = new Date(date);
         const now = new Date();
-        const diff = now.getTime() - new Date(date).getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-        if (days === 0) {
-            return new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        } else if (days === 1) {
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const targetDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+        if (targetDate.getTime() === today.getTime()) {
+            return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        } else if (targetDate.getTime() === yesterday.getTime()) {
             return 'Hôm qua';
-        } else if (days < 7) {
-            return `${days} ngày trước`;
         } else {
-            return new Date(date).toLocaleDateString('vi-VN');
+            return d.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
         }
     };
 
