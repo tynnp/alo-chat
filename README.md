@@ -16,6 +16,10 @@
 
 **Ứng dụng nhắn tin thời gian thực đa nền tảng, thuận tiện và dễ dàng cho công việc!**
 
+<kbd>
+  <img src="assets/screenshot.png" alt="Alo Chat Screenshot" />
+</kbd>
+
 </div>
 
 ## Cấu trúc dự án
