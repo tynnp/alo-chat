@@ -75,7 +75,9 @@ export default function ChatListSidebar({ onSelectConversation, width, setWidth 
         if (conv.type === 'self') {
             return {
                 name: 'Cloud của tôi',
-                lastMessage: conv.lastMessage?.content ? `${prefix}${conv.lastMessage.content}` : 'Lưu trữ cá nhân',
+                lastMessage: (conv.lastMessage?.content && conv.lastMessage.content !== 'Cloud của tôi')
+                    ? `${prefix}${conv.lastMessage.content}`
+                    : 'Nơi lưu trữ mọi thứ của bạn',
                 avatar: null,
                 type: 'self' as const,
             };

@@ -25,7 +25,7 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
             return `${conversation.memberCount || 0} thành viên`;
         }
 
-        return 'Cloud của tôi';
+        return 'Nơi lưu trữ mọi thứ của bạn';
     };
 
     return (
