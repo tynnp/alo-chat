@@ -28,8 +28,11 @@ function formatRelativeTime(date?: Date): string | undefined {
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours} giờ trước`;
 
-    const days = Math.floor(hours / 24);
-    return `${days} ngày trước`;
+    return `vào ${date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    })}`;
 }
 
 export default function Chat() {
