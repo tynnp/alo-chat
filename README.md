@@ -14,9 +14,6 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=websocket&logoColor=white)
 
-
-<br/>
-
 **Ứng dụng nhắn tin thời gian thực đa nền tảng, thuận tiện và dễ dàng cho công việc!**
 
 </div>
