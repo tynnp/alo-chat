@@ -2,6 +2,18 @@
 
 Tất cả các thay đổi đáng chú ý đối với dự án này sẽ được ghi lại trong file này. Xem thêm mẫu changelog [ở đây](.github/CHANGELOG_TEMPLATE.md).
 
+## [0.2.2] - 2026-01-05
+
+### Thêm mới
+- Hỗ trợ dán ảnh trực tiếp vào khung chat.
+
+### Sửa lỗi
+- Cải thiện định dạng thời gian tin nhắn trong danh sách chat: Hiển thị "Hôm qua" và ngày cụ thể.
+- Thêm tiền tố "Bạn:" cho tin nhắn cuối cùng nếu người gửi là chính mình.
+- Thay đổi trạng thái mặc định của Cloud của tôi thành "Nơi lưu trữ mọi thứ của bạn".
+- Hiển thị ngày cụ thể cho trạng thái hoạt động cuối nếu offline qua 24 giờ.
+- Tối ưu hóa logic cuộn: Không tự động nhảy xuống khi đang xem tin nhắn cũ.
+
 ## [0.2.1] - 2026-01-04
 
 ### Sửa lỗi
