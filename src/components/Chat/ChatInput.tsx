@@ -77,17 +77,33 @@ export default function ChatInput({ onSendMessage, onFileUpload, conversationId 
         }
     };
 
+    const handleFileSelection = (file: File) => {
+        const isImage = file.type.startsWith('image/');
+        setSelectedFile({
+            file,
+            preview: isImage ? URL.createObjectURL(file) : undefined,
+        });
+    };
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const isImage = file.type.startsWith('image/');
-            setSelectedFile({
-                file,
-                preview: isImage ? URL.createObjectURL(file) : undefined,
-            });
+            handleFileSelection(file);
         }
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    handleFileSelection(file);
+                }
+            }
         }
     };
 
@@ -148,6 +164,7 @@ export default function ChatInput({ onSendMessage, onFileUpload, conversationId 
                             emitTyping();
                         }}
                         onKeyDown={handleKeyDown}
+                        onPaste={handlePaste}
                         placeholder={selectedFile ? "Nhấn gửi để tải file..." : "Nhập tin nhắn..."}
                         disabled={!!selectedFile}
                         className="flex-1 bg-transparent border-none focus:outline-none text-gray-800 text-sm py-1 max-h-32 overflow-y-auto disabled:text-gray-400"
